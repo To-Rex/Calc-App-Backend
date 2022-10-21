@@ -99,44 +99,18 @@ func checkUser(client *mongo.Client, email string, password string) bool {
 	return false
 }
 
-func insertUser(client *mongo.Client, user User) {
-	//if user available database return error
-
-	if user.email == "" || user.password == "" {
-		fmt.Println("Email or password is empty")
-		return
-	}
-
-	collection := client.Database("CalcData").Collection("users")
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-	_, err := collection.InsertOne(ctx, user)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println("User inserted")
-}
-
 func register(c *gin.Context) {
+	//body raw json {"email":"email","password":"password"} postman post localhost:8080/register
 	var user User
-	err := c.BindJSON(&user)
-	if err != nil {
-		fmt.Println(err)
-	}
+	c.BindJSON(&user)
 	client := connectDB()
-	insertUser(client, user)
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
-}
-
-func getUser(client *mongo.Client, email string) User {
 	collection := client.Database("CalcData").Collection("users")
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-	var user User
-	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+	_, err := collection.InsertOne(ctx, bson.M{"email": user.email, "password": user.password, "verify": user.verify, "times": user.times, "coments": user.coments, "timesWorks": user.timesWorks, "companets": user.companets, "token": user.token})
 	if err != nil {
 		fmt.Println(err)
 	}
-	return user
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
 
