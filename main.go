@@ -90,34 +90,13 @@ func checkToken(c *gin.Context) {
 }
 
 func register(c *gin.Context) {
-	//save to db and return token
 	var user User
-	err := c.BindJSON(&user)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Bad request"})
-		return
-	}
+	c.BindJSON(&user)
 	client := connectToDB()
 	collection := client.Database("CalcData").Collection("users")
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	filter := bson.M{"email": user.Email}
-	var result User
-	err = collection.FindOne(ctx, filter).Decode(&result)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Bad request"})
-		return
-	}
-	if result.Email != "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Bad request"})
-		return
-	}
-	user.Token = createToken(user.Email)
-	_, err = collection.InsertOne(ctx, user)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Bad request"})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "OK"})
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	result, _ := collection.InsertOne(ctx, user)
+	c.JSON(http.StatusOK, result)
 }
 
 // func register1(c *gin.Context) {
