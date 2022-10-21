@@ -119,28 +119,6 @@ func login(c *gin.Context) {
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
-	// var user User
-	// c.BindJSON(&user)
-	// client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	// client.Connect(ctx)
-	// defer client.Disconnect(ctx)
-	// collection := client.Database("CalcData").Collection("users")
-	// filter := bson.D{{Key: "email", Value: user.Email}}
-	// var result User
-	// collection.FindOne(context.Background(), filter).Decode(&result)
-	// if result.Email == user.Email {
-	// 	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password)); err != nil {
-	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "password is incorrect"})
-	// 		return
-	// 	}
-	// 	 c.JSON(http.StatusOK, Token{Token: createToken(user.Email)})
-	// 	return
-	// }
-	// c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 
 func cheskverefy(c *gin.Context) {
 	var user User
@@ -165,24 +143,7 @@ func cheskverefy(c *gin.Context) {
 
 func verefyUser(c *gin.Context) {
 	//post authorization bearer token user db update verefy to true and return token to client 
-	token := c.GetHeader("Authorization")
-	token = token[7:]
-	claims := &jwt.StandardClaims{}
-	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("SECRET")), nil
-	})
-	if err != nil {
-		if err == jwt.ErrSignatureInvalid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is invalid"})
-			return
-		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": "token is invalid"})
-		return
-	}
-	if !tkn.Valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "token is invalid"})
-		return
-	}
+
 	var user User
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
@@ -198,8 +159,8 @@ func verefyUser(c *gin.Context) {
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == user.Email {
 		update := bson.D{
-			{"$set", bson.D{
-				{"verefy", "true"},
+			{Key: "$set", Value: bson.D{
+				{Key: "verefy", Value: "true"},
 			}},
 		}
 		collection.UpdateOne(context.Background(), filter, update)
