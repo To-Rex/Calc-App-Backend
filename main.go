@@ -24,14 +24,14 @@ const uri = "mongodb+srv://CalcData:r5p3Gwuhn7ELIm3z@cluster0.vif5nkw.mongodb.ne
 //const uri = "mongodb+srv://root:1234@cluster0.ik76ncs.mongodb.net/?retryWrites=true&w=majority"
 
 type User struct {
-	Email   string `json:"email"`
-	Password string `json:"password"`
-	Verefy string `json:"verefy"`
-	Times []string `json:"times"`
-	Comments []string `json:"comments"`
+	Email      string   `json:"email"`
+	Password   string   `json:"password"`
+	Verefy     string   `json:"verefy"`
+	Times      []string `json:"times"`
+	Comments   []string `json:"comments"`
 	TimesWorks []string `json:"timesWorks"`
-	Companets []string `json:"companets"`
-	Token string `json:"token"`
+	Companets  []string `json:"companets"`
+	Token      string   `json:"token"`
 }
 
 type Token struct {
@@ -53,7 +53,7 @@ func passwordHash(password string) string {
 }
 
 func register(c *gin.Context) {
-	//chesk email data base if exist return error if not create new user and return token to client 
+	//chesk email data base if exist return error if not create new user and return token to client
 	var user User
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
@@ -73,14 +73,14 @@ func register(c *gin.Context) {
 		return
 	}
 	user = User{
-		Email:   user.Email,
-		Password: passwordHash(user.Password),
-		Verefy: "false",
-		Times: []string{},
-		Comments: []string{},
+		Email:      user.Email,
+		Password:   passwordHash(user.Password),
+		Verefy:     "false",
+		Times:      []string{},
+		Comments:   []string{},
 		TimesWorks: []string{},
-		Companets: []string{},
-		Token: createToken(user.Email),
+		Companets:  []string{},
+		Token:      createToken(user.Email),
 	}
 	user.Token = createToken(user.Email)
 	collection.InsertOne(context.Background(), user)
@@ -106,12 +106,12 @@ func login(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "password is incorrect"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"token": createToken(user.Email)})
+		c.JSON(http.StatusOK, "token: " +result.Token)
+
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
-
 
 func createToken(username string) string {
 	claims := jwt.MapClaims{}
