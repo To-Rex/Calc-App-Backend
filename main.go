@@ -3,17 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-
+	"log"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"os"
 	"time"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const uri = "mongodb+srv://CalcData:r5p3Gwuhn7ELIm3z@cluster0.vif5nkw.mongodb.net/?retryWrites=true&w=majority"
@@ -42,6 +41,7 @@ func main() {
 	r.POST("cheskverefy", cheskverefy)
 	r.POST("verefyuser", verefyUser)
 	r.GET("getuser", getUser)
+	r.GET("getusers", getAllUsers)
 	r.Run(":8080")
 }
 func passwordHash(password string) string {
@@ -89,7 +89,6 @@ func register(c *gin.Context) {
 
 func login(c *gin.Context) {
 	//if verfy is false return error if true return token
-
 	var user User
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
@@ -100,23 +99,32 @@ func login(c *gin.Context) {
 	client.Connect(ctx)
 	defer client.Disconnect(ctx)
 	collection := client.Database("CalcData").Collection("users")
-	filter := bson.D{{Key: "email", Value: user.Email}}
-	var result User
-	collection.FindOne(context.Background(), filter).Decode(&result)
-	if result.Email == user.Email {
-		if result.Verefy == "false" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "user not verfy"})
-			return
-		}
-		if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password)); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "password is not correct"})
-			return
-		}
-		//c.JSON(http.StatusOK, result.Token)
-		c.JSON(http.StatusOK, gin.H{"token": result.Token})
-		return
+	//all users in data base
+	cur, err := collection.Find(context.Background(), bson.D{})
+	if err != nil {
+		log.Fatal(err)
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+	defer cur.Close(ctx)
+	for cur.Next(ctx) {
+		var result User
+		err := cur.Decode(&result)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if result.Email == user.Email {
+			if result.Verefy == "false" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verifed"})
+				return
+			}
+			err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password))
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "password is incorrect"})
+				return
+			}
+			c.JSON(http.StatusOK, Token{Token: createToken(user.Email)})
+			return
+		}
+	}
 }
 
 func cheskverefy(c *gin.Context) {
@@ -170,7 +178,34 @@ func verefyUser(c *gin.Context) {
 }
 
 func getUser(c *gin.Context) {
-	//get authorization bearer token user db return user all data
+	//get authorization bearer token return all user data
+	token := c.Request.Header.Get("Authorization")
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "token is empty"})
+		return
+	}
+	
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "token", Value: token}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Token == token {
+		c.JSON(http.StatusOK, result)
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "token is incorrect"})
+	
+}
+
+func getAllUsers(c *gin.Context) {
+	//get authorization bearer token user db return all users all data
 	token := c.Request.Header.Get("Authorization")
 	token = token[7:len(token)]
 	claims := jwt.MapClaims{}
@@ -195,13 +230,27 @@ func getUser(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == claims["email"] {
-		c.JSON(http.StatusOK, result)
+		var results []*User
+		cur, err := collection.Find(context.Background(), bson.D{})
+		if err != nil {
+			log.Fatal(err)
+		}
+		for cur.Next(context.Background()) {
+			var elem User
+			err := cur.Decode(&elem)
+			if err != nil {
+				log.Fatal(err)
+			}
+			results = append(results, &elem)
+		}
+		if err := cur.Err(); err != nil {
+			log.Fatal(err)
+		}
+		cur.Close(context.Background())
+		c.JSON(http.StatusOK, results)
 		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
-
 }
-
 
 func createToken(username string) string {
 	claims := jwt.MapClaims{}
