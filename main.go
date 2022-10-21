@@ -100,17 +100,33 @@ func checkUser(client *mongo.Client, email string, password string) bool {
 }
 
 func register(c *gin.Context) {
-	//body raw json {"email":"email","password":"password"} postman post localhost:8080/register
+	//email and password parameters from request body 
 	var user User
 	c.BindJSON(&user)
 	client := connectDB()
 	collection := client.Database("CalcData").Collection("users")
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-	_, err := collection.InsertOne(ctx, bson.M{"email": user.email, "password": user.password, "verify": user.verify, "times": user.times, "coments": user.coments, "timesWorks": user.timesWorks, "companets": user.companets, "token": user.token})
+	var userDB User
+	err := collection.FindOne(ctx, bson.M{"email": user.email}).Decode(&userDB)
 	if err != nil {
 		fmt.Println(err)
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	if userDB.email == user.email {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User already exists!"})
+		return
+	}
+	token, err := createToken(user.email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	user.token = token
+	_, err = collection.InsertOne(ctx, user)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 
