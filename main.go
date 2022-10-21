@@ -100,33 +100,7 @@ func checkUser(client *mongo.Client, email string, password string) bool {
 }
 
 func register(c *gin.Context) {
-	//email and password parameters from request body 
-	var user User
-	c.BindJSON(&user)
-	client := connectDB()
-	collection := client.Database("CalcData").Collection("users")
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-	var userDB User
-	err := collection.FindOne(ctx, bson.M{"email": user.email}).Decode(&userDB)
-	if err != nil {
-		fmt.Println(err)
-	}
-	if userDB.email == user.email {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User already exists!"})
-		return
-	}
-	token, err := createToken(user.email)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	user.token = token
-	_, err = collection.InsertOne(ctx, user)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	
 }
 
 
