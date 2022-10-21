@@ -134,30 +134,6 @@ func cheskverefy(c *gin.Context) {
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
-// func cheskverefy(c *gin.Context) {
-// 	var user User
-// 	c.BindJSON(&user)
-// 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
-// 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-// 	client.Connect(ctx)
-// 	defer client.Disconnect(ctx)
-// 	collection := client.Database("CalcData").Collection("users")
-// 	filter := bson.D{{Key: "email", Value: user.Email}}
-// 	var result User
-// 	collection.FindOne(context.Background(), filter).Decode(&result)
-// 	if result.Email == user.Email {
-// 		if result.Verefy == "true" {
-// 			c.JSON(http.StatusOK, gin.H{"verefy": "true"})
-// 			return
-// 		}
-// 		c.JSON(http.StatusOK, gin.H{"verefy": "false"})
-// 		return
-// 	}
-// 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
-// }
 
 func verefyUser(c *gin.Context) {
 	//user db update verefy to true and return token to client 
