@@ -60,18 +60,13 @@ func register(c *gin.Context) {
 		fmt.Println(err)
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		fmt.Println(err)
-	}
+	client.Connect(ctx)
 	defer client.Disconnect(ctx)
 	collection := client.Database("CalcData").Collection("users")
 	filter := bson.D{{Key: "email", Value: user.Email}}
 	var result User
-	err = collection.FindOne(context.Background(), filter).Decode(&result)
-	if err != nil {
-		fmt.Println(err)
-	}
+	collection.FindOne(context.Background(), filter).Decode(&result)
+
 	if result.Email == user.Email {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "email already exist"})
 		return
@@ -87,10 +82,7 @@ func register(c *gin.Context) {
 		Token: createToken(user.Email),
 	}
 	user.Token = createToken(user.Email)
-	_, err = collection.InsertOne(context.Background(), user)
-	if err != nil {
-		fmt.Println(err)
-	}
+	collection.InsertOne(context.Background(), user)
 	c.JSON(http.StatusOK, user)
 }
 
