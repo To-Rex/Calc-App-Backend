@@ -8,12 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 
-	//"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	//"go.mongodb.org/mongo-driver/mongo/readpref"
 	"net/http"
 	"os"
 	"time"
@@ -173,38 +170,36 @@ func verefyUser(c *gin.Context) {
 }
 
 func getUser(c *gin.Context) {
-	//get authorization bearer token user db return user data 
-	AuthToken := c.GetHeader("Authorization")
-	token, err := jwt.Parse(AuthToken, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("there was an error")
-		}
+	//get authorization bearer token user db return user all data
+	token := c.Request.Header.Get("Authorization")
+	token = token[7:len(token)]
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte("secret"), nil
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "token is not correct"})
 		return
 	}
-	if token.Valid {
-		claims := token.Claims.(jwt.MapClaims)
-		email := claims["email"].(string)
-		client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-		if err != nil {
-			fmt.Println(err)
-		}
-		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-		client.Connect(ctx)
-		defer client.Disconnect(ctx)
-		collection := client.Database("CalcData").Collection("users")
-		filter := bson.D{{Key: "email", Value: email}}
-		var result User
-		collection.FindOne(context.Background(), filter).Decode(&result)
+	email := claims["email"].(string)
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: email}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == email {
 		c.JSON(http.StatusOK, result)
 		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"error": "token is not correct"})
-
+	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
+
 
 func createToken(username string) string {
 	claims := jwt.MapClaims{}
