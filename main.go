@@ -113,7 +113,7 @@ func register(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User created successfully"})
 }
 
-// func register(c *gin.Context) {
+// func register1(c *gin.Context) {
 // 	var user User
 // 	c.BindJSON(&user)
 // 	user.Token = createToken(user.Email)
