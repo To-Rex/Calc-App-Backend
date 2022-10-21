@@ -247,13 +247,8 @@ func getAllUsers(c *gin.Context) {
 			log.Fatal(err)
 		}
 		cur.Close(context.Background())
-		result =User{
-			Email:    results[0].Email,
-			Verefy:   results[0].Verefy,
-			Times:   results[0].Times,
-			Comments: results[0].Comments,
-			TimesWorks: results[0].TimesWorks,
-		}
+		//results = results[1:]
+
 		c.JSON(http.StatusOK, results)
 		return
 	}
