@@ -181,7 +181,7 @@ func getUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "token is not correct"})
 		return
 	}
-	email := claims["email"].(string)
+	userToken := claims["token"].(string)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
 		fmt.Println(err)
@@ -190,14 +190,15 @@ func getUser(c *gin.Context) {
 	client.Connect(ctx)
 	defer client.Disconnect(ctx)
 	collection := client.Database("CalcData").Collection("users")
-	filter := bson.D{{Key: "email", Value: email}}
+	filter := bson.D{{Key: "token", Value: userToken}}
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
-	if result.Email == email {
+	if result.Token == userToken {
 		c.JSON(http.StatusOK, result)
 		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+	c.JSON(http.StatusBadRequest, gin.H{"error": "token is not correct"})
+	
 }
 
 
