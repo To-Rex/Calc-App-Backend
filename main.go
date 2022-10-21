@@ -6,6 +6,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 
 	//"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson"
@@ -42,6 +43,13 @@ func main() {
 	r.POST("register", register)
 	r.Run(":8080")
 }
+func passwordHash(password string) string {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return string(hash)
+}
 
 func register(c *gin.Context) {
 	//chesk email data base if exist return error if not create new user and return token to client 
@@ -70,7 +78,7 @@ func register(c *gin.Context) {
 	}
 	user = User{
 		Email:   user.Email,
-		Password: user.Password,
+		Password: passwordHash(user.Password),
 		Verefy: "false",
 		Times: []string{},
 		Comments: []string{},
