@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	//"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson"
+	//"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -89,16 +89,6 @@ func checkToken(c *gin.Context) {
 	c.Next()
 }
 
-func register(c *gin.Context) {
-	var user User
-	c.BindJSON(&user)
-	client := connectToDB()
-	collection := client.Database("CalcData").Collection("users")
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	result, _ := collection.InsertOne(ctx, user)
-	c.JSON(http.StatusOK, result)
-}
-
 // func register1(c *gin.Context) {
 // 	var user User
 // 	c.BindJSON(&user)
@@ -122,6 +112,22 @@ func register(c *gin.Context) {
 // 	}
 // 	c.JSON(http.StatusOK, gin.H{"Token": user.Token})
 // }
+
+func register(c *gin.Context) {
+	var user User
+	c.BindJSON(&user)
+	user.Token = createToken(user.Email)
+	client := connectToDB()
+	collection := client.Database("test").Collection("users")
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	_, err := collection.InsertOne(ctx, user)
+	if err != nil {
+		fmt.Println(err)
+	}
+	c.JSON(http.StatusOK, gin.H{"Token": user.Token})
+
+}
+
 
 
 
