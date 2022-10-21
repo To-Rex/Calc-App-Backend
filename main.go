@@ -41,6 +41,7 @@ type Token struct {
 func main() {
 	r := gin.Default()
 	r.POST("register", register)
+	r.GET("login", login)
 	r.Run(":8080")
 }
 func passwordHash(password string) string {
@@ -84,6 +85,32 @@ func register(c *gin.Context) {
 	user.Token = createToken(user.Email)
 	collection.InsertOne(context.Background(), user)
 	c.JSON(http.StatusOK, user)
+}
+
+func login(c *gin.Context) {
+	//check email and password if exist return token to client
+	var user User
+	c.BindJSON(&user)
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: user.Email}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == user.Email {
+		if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password)); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "password is incorrect"})
+			return
+		}
+		c.JSON(http.StatusOK, result)
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
 
 
