@@ -68,6 +68,16 @@ func register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "email already exist"})
 		return
 	}
+	user = User{
+		Email:   user.Email,
+		Password: user.Password,
+		Verefy: "false",
+		Times: []string{},
+		Comments: []string{},
+		TimesWorks: []string{},
+		Companets: []string{},
+		Token: createToken(user.Email),
+	}
 	user.Token = createToken(user.Email)
 	_, err = collection.InsertOne(context.Background(), user)
 	if err != nil {
@@ -75,6 +85,7 @@ func register(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, user)
 }
+
 
 func createToken(username string) string {
 	claims := jwt.MapClaims{}
