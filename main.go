@@ -88,7 +88,6 @@ func register(c *gin.Context) {
 }
 
 func login(c *gin.Context) {
-	//check email and password if exist return token to client
 	var user User
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
