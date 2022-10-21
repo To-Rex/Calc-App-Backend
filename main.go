@@ -173,28 +173,37 @@ func verefyUser(c *gin.Context) {
 }
 
 func getUser(c *gin.Context) {
-	//get authorization bearer token user db return user data to client
-	Token := c.GetHeader("Authorization")
-	if Token == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "token is empty"})
+	//get authorization bearer token user db return user data 
+	AuthToken := c.GetHeader("Authorization")
+	token, err := jwt.Parse(AuthToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("there was an error")
+		}
+		return []byte("secret"), nil
+	})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "token is not correct"})
 		return
 	}
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	if err != nil {
-		fmt.Println(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client.Connect(ctx)
-	defer client.Disconnect(ctx)
-	collection := client.Database("CalcData").Collection("users")
-	filter := bson.D{{Key: "token", Value: Token}}
-	var result User
-	collection.FindOne(context.Background(), filter).Decode(&result)
-	if result.Token == Token {
+	if token.Valid {
+		claims := token.Claims.(jwt.MapClaims)
+		email := claims["email"].(string)
+		client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+		if err != nil {
+			fmt.Println(err)
+		}
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		client.Connect(ctx)
+		defer client.Disconnect(ctx)
+		collection := client.Database("CalcData").Collection("users")
+		filter := bson.D{{Key: "email", Value: email}}
+		var result User
+		collection.FindOne(context.Background(), filter).Decode(&result)
 		c.JSON(http.StatusOK, result)
 		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"error": "token is incorrect"})
+	c.JSON(http.StatusBadRequest, gin.H{"error": "token is not correct"})
+
 }
 
 func createToken(username string) string {
