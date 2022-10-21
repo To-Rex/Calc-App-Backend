@@ -44,6 +44,7 @@ func main() {
 	r.GET("login", login)
 	r.POST("cheskverefy", cheskverefy)
 	r.POST("verefyuser", verefyUser)
+	r.GET("getuser", getUser)
 	r.Run(":8080")
 }
 func passwordHash(password string) string {
@@ -169,6 +170,31 @@ func verefyUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+}
+
+func getUser(c *gin.Context) {
+	//get authorization bearer token user db return user data to client
+	Token := c.GetHeader("Authorization")
+	if Token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "token is empty"})
+		return
+	}
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "token", Value: Token}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Token == Token {
+		c.JSON(http.StatusOK, result)
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "token is incorrect"})
 }
 
 func createToken(username string) string {
