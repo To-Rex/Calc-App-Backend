@@ -114,7 +114,8 @@ func login(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "password is not correct"})
 			return
 		}
-		c.JSON(http.StatusOK, result.Token)
+		//c.JSON(http.StatusOK, result.Token)
+		c.JSON(http.StatusOK, gin.H{"token": result.Token})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
