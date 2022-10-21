@@ -43,6 +43,7 @@ func main() {
 	r.POST("register", register)
 	r.GET("login", login)
 	r.POST("verefy", verefy)
+	r.POST("verefyuser", verefyUser)
 	r.Run(":8080")
 }
 func passwordHash(password string) string {
@@ -133,6 +134,33 @@ func verefy(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"verefy": "false"})
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+}
+
+func verefyUser(c *gin.Context) {
+	//user db update verefy to true and return token to client 
+	var user User
+	c.BindJSON(&user)
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))	
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: user.Email}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == user.Email {
+		if result.Verefy == "true" {
+			c.JSON(http.StatusOK, gin.H{"verefy": "true"})
+			return
+		}
+		collection.UpdateOne(context.Background(), filter, bson.D{{Key: "$set", Value: bson.D{{Key: "verefy", Value: "true"}}}})
+		c.JSON(http.StatusOK, Token{Token: createToken(user.Email)})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
