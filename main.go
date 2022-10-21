@@ -90,6 +90,8 @@ func register(c *gin.Context) {
 }
 
 func login(c *gin.Context) {
+	//if verfy is false return error if true return token
+
 	var user User
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
@@ -104,15 +106,41 @@ func login(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == user.Email {
-		if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password)); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "password is incorrect"})
+		if result.Verefy == "false" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user not verfy"})
 			return
 		}
-		 c.JSON(http.StatusOK, Token{Token: createToken(user.Email)})
+		if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password)); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "password is not correct"})
+			return
+		}
+		c.JSON(http.StatusOK, result)
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
+	// var user User
+	// c.BindJSON(&user)
+	// client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	// client.Connect(ctx)
+	// defer client.Disconnect(ctx)
+	// collection := client.Database("CalcData").Collection("users")
+	// filter := bson.D{{Key: "email", Value: user.Email}}
+	// var result User
+	// collection.FindOne(context.Background(), filter).Decode(&result)
+	// if result.Email == user.Email {
+	// 	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password)); err != nil {
+	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "password is incorrect"})
+	// 		return
+	// 	}
+	// 	 c.JSON(http.StatusOK, Token{Token: createToken(user.Email)})
+	// 	return
+	// }
+	// c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 
 func cheskverefy(c *gin.Context) {
 	var user User
