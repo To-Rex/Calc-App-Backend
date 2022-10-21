@@ -19,12 +19,14 @@ const uri = "mongodb+srv://CalcData:r5p3Gwuhn7ELIm3z@cluster0.vif5nkw.mongodb.ne
 //const uri = "mongodb+srv://root:1234@cluster0.ik76ncs.mongodb.net/?retryWrites=true&w=majority"
 
 type User struct {
-	Username string `json:"username"`
+	Email   string `json:"email"`
 	Password string `json:"password"`
-	Name     string `json:"name"`
-	Age      int    `json:"age"`
-	Email    string `json:"email"`
-	Token    string `json:"token"`
+	Verefy string `json:"verefy"`
+	Times []string `json:"times"`
+	Comments []string `json:"comments"`
+	TimesWorks []string `json:"timesWorks"`
+	Companets []string `json:"companets"`
+	Token string `json:"token"`
 }
 
 type Token struct {
@@ -40,7 +42,7 @@ func main() {
 func register(c *gin.Context) {
 	var user User
 	c.BindJSON(&user)
-	user.Token = createToken(user.Username)
+	user.Token = createToken(user.Email)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
 		fmt.Println(err)
