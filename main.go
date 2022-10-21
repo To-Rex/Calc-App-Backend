@@ -201,7 +201,7 @@ func getUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "token is incorrect"})
-	
+
 }
 
 func getAllUsers(c *gin.Context) {
@@ -247,6 +247,13 @@ func getAllUsers(c *gin.Context) {
 			log.Fatal(err)
 		}
 		cur.Close(context.Background())
+		result =User{
+			Email:    results[0].Email,
+			Verefy:   results[0].Verefy,
+			Times:   results[0].Times,
+			Comments: results[0].Comments,
+			TimesWorks: results[0].TimesWorks,
+		}
 		c.JSON(http.StatusOK, results)
 		return
 	}
