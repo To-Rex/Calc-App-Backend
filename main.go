@@ -277,14 +277,15 @@ func addTime(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == claims["email"] {
-		
+		//add arrays index in time array in user db
 		update := bson.D{
-			{Key: "$set", Value: bson.D{
+			{Key: "$push", Value: bson.D{
 				{Key: "times", Value: user.Times},
 			}},
 		}
 		collection.UpdateOne(context.Background(), filter, update)
 		c.JSON(http.StatusOK, gin.H{"message": "time added"})
+		return
 	}
 }
 
@@ -312,7 +313,6 @@ func updateTime(c *gin.Context) {
 	filter := bson.D{{Key: "email", Value: claims["email"]}}
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
-	//{"times":[["09:00","salom qale","0"],["09:00","salom qale","0"],["09:00","salom qale","0"],["09:00","salom qale","0"]]} update arrays index
 	if result.Email == claims["email"] {
 		update := bson.D{
 			{Key: "$set", Value: bson.D{
