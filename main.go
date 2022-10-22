@@ -22,8 +22,6 @@ type User struct {
 	Password   string   `json:"password"`
 	Verefy     string   `json:"verefy"`
 	Times      []string `json:"times"`
-	Comments   []string `json:"comments"`
-	TimesWorks []string `json:"timesWorks"`
 	Companets  []string `json:"companets"`
 	Token      string   `json:"token"`
 }
@@ -254,7 +252,7 @@ func getAllUsers(c *gin.Context) {
 }
 
 func addTime(c *gin.Context) {
-	//get authorization bearer token user db add time to user
+	//get authorization bearer token add array time db user
 	token := c.Request.Header.Get("Authorization")
 	token = token[7:len(token)]
 	claims := jwt.MapClaims{}
@@ -280,8 +278,8 @@ func addTime(c *gin.Context) {
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == claims["email"] {
 		update := bson.D{
-			{Key: "$set", Value: bson.D{
-				{Key: "time", Value: user.Times},
+			{Key: "$push", Value: bson.D{
+				{Key: "times", Value: user.Times},
 			}},
 		}
 		collection.UpdateOne(context.Background(), filter, update)
