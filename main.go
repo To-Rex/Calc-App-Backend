@@ -314,18 +314,7 @@ func updateTime(c *gin.Context) {
 	filter := bson.D{{Key: "email", Value: claims["email"]}}
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
-	insex := 0
-	if result.Email == claims["email"] {
-		update := bson.D{
-			{Key: "$set", Value: bson.D{
-				{Key: "insex", Value: insex},
-				{Key: "times." + strconv.Itoa(insex), Value: user.Times},
-			}},
-		}
-		collection.UpdateOne(context.Background(), filter, update)
-		c.JSON(http.StatusOK, gin.H{"message": "time updated"})
-		return
-	}
+	
 }
 
 func createToken(username string) string {
