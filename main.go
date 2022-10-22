@@ -253,78 +253,17 @@ func getAllUsers(c *gin.Context) {
 }
 
 func addTime(c *gin.Context) {
-	//get authorization bearer token add array time db user
+	//get authorization bearer token add array index in time array in user db
 	token := c.Request.Header.Get("Authorization")
 	token = token[7:len(token)]
 	claims := jwt.MapClaims{}
 	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("SECRET")), nil
 	})
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-		return
-	}
-	var user User
-	c.BindJSON(&user)
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	if err != nil {
-		fmt.Println(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client.Connect(ctx)
-	defer client.Disconnect(ctx)
-	collection := client.Database("CalcData").Collection("users")
-	filter := bson.D{{Key: "email", Value: claims["email"]}}
-	var result User
-	collection.FindOne(context.Background(), filter).Decode(&result)
-	if result.Email == claims["email"] {
-		update := bson.D{
-			{Key: "$push", Value: bson.D{
-				{Key: "times", Value: user.Times},
-			}},
-		}
-		collection.UpdateOne(context.Background(), filter, update)
-		c.JSON(http.StatusOK, gin.H{"message": "time added"})
-		return
-	}
 }
 
 func updateTime(c *gin.Context) {
-	//{"_id":{"$oid":"6353b71356649875aca01589"},"email":"Gani@gmail.com","password":"$2a$10$UCjP8dAiyCdR7DPo9V0I2.it2IikdrdxP73WVoZ7w2pCJpjb/Oi7W","verefy":"true","times":[null,["09:00","salom qale","0"],["09:00","salom qale","0"]],"companets":[],"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJlbWFpbCI6IkdhbmlAZ21haWwuY29tIn0.I8RA_hRIY_kfj65ZtNGtmpYsarLwFQIDC5xBZbxFnGY","insex":{"$numberInt":"0"}}token := c.Request.Header.Get("Authorization")
-
-	token := c.Request.Header.Get("Authorization")
-	token = token[7:len(token)]
-	claims := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("SECRET")), nil
-	})
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-		return
-	}
-	var user User
-	c.BindJSON(&user)
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	if err != nil {
-		fmt.Println(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client.Connect(ctx)
-	defer client.Disconnect(ctx)
-	collection := client.Database("CalcData").Collection("users")
-	filter := bson.D{{Key: "email", Value: claims["email"]}}
-	var result User
-	collection.FindOne(context.Background(), filter).Decode(&result)
-	if result.Email == claims["email"] {
-		update := bson.D{
-			{Key: "$set", Value: bson.D{
-				{Key: "times", Value: user.Times},
-			}},
-		}
-		collection.UpdateOne(context.Background(), filter, update)
-		c.JSON(http.StatusOK, gin.H{"message": "time updated"})
-		return
-	}
+	
 }
 
 func createToken(username string) string {
