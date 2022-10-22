@@ -15,8 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-//const uri = "mongodb+srv://CalcData:r5p3Gwuhn7ELIm3z@cluster0.vif5nkw.mongodb.net/?retryWrites=true&w=majority"
-
 const uri = "mongodb+srv://CalcData:r5p3Gwuhn7ELIm3z@cluster0.vif5nkw.mongodb.net/?retryWrites=true&w=majority"
 
 type User struct {
@@ -272,18 +270,23 @@ func addTime(c *gin.Context) {
 	filter := bson.D{{Key: "email", Value: user.Email}}
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
-	//add time in [{"time": "2020-12-12 12:12:12","coment","true"}] format
+	//add time in [{"time": "2020-12-12 12:12:12","coment","true"}] format to user db time array 
 	if result.Email == user.Email {
 		update := bson.D{
-			{Key: "$set", Value: bson.D{
-				{Key: "times", Value: user.Times},
+			{Key: "$push", Value: bson.D{
+				{Key: "time", Value: bson.D{
+					{Key: "times", Value: user.Times},
+					{Key: "coment", Value: "user.Times[0].Coment"},
+					{Key: "verefy", Value: "user.Times[0].Verefy"},
+				}},
 			}},
 		}
 		collection.UpdateOne(context.Background(), filter, update)
-		c.JSON(http.StatusOK, gin.H{"message": "time added"})
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+
 }
 
 func createToken(username string) string {
