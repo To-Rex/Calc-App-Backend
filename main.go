@@ -17,8 +17,6 @@ import (
 
 const uri = "mongodb+srv://CalcData:r5p3Gwuhn7ELIm3z@cluster0.vif5nkw.mongodb.net/?retryWrites=true&w=majority"
 
-//const uri = "mongodb+srv://root:1234@cluster0.ik76ncs.mongodb.net/?retryWrites=true&w=majority"
-
 type User struct {
 	Email      string   `json:"email"`
 	Password   string   `json:"password"`
@@ -42,6 +40,7 @@ func main() {
 	r.POST("verefyuser", verefyUser)
 	r.GET("getuser", getUser)
 	r.GET("getusers", getAllUsers)
+	r.POST("addtime", addTime)
 	r.Run(":8080")
 }
 func passwordHash(password string) string {
@@ -250,6 +249,43 @@ func getAllUsers(c *gin.Context) {
 		//results = results[1:]
 
 		c.JSON(http.StatusOK, results)
+		return
+	}
+}
+
+func addTime(c *gin.Context) {
+	//get authorization bearer token user db add time to user
+	token := c.Request.Header.Get("Authorization")
+	token = token[7:len(token)]
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	var user User
+	c.BindJSON(&user)
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: claims["email"]}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == claims["email"] {
+		update := bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "time", Value: user.Times},
+			}},
+		}
+		collection.UpdateOne(context.Background(), filter, update)
+		c.JSON(http.StatusOK, gin.H{"message": "time added"})
 		return
 	}
 }
