@@ -277,14 +277,14 @@ func addTime(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == claims["email"] {
+		//add array id auto increment time array in user db
 		update := bson.D{
 			{Key: "$push", Value: bson.D{
 				{Key: "times", Value: user.Times},
 			}},
 		}
 		collection.UpdateOne(context.Background(), filter, update)
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
-		return
+		c.JSON(http.StatusOK, gin.H{"message": "time added"})
 	}
 }
 
