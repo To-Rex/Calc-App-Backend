@@ -260,6 +260,33 @@ func addTime(c *gin.Context) {
 	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("SECRET")), nil
 	})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	var user User
+	c.BindJSON(&user)
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: claims["email"]}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == claims["email"] {
+		update := bson.D{
+			{Key: "$push", Value: bson.D{
+				{Key: "time", Value: user.Times},
+			}},
+		}
+		collection.UpdateOne(context.Background(), filter, update)
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+		return
+	}
 }
 
 func updateTime(c *gin.Context) {
