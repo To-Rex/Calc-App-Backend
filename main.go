@@ -74,8 +74,6 @@ func register(c *gin.Context) {
 		Password:   passwordHash(user.Password),
 		Verefy:     "false",
 		Times:      []string{},
-		Comments:   []string{},
-		TimesWorks: []string{},
 		Companets:  []string{},
 		Token:      createToken(user.Email),
 	}
