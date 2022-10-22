@@ -3,16 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"os"
 	"time"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const uri = "mongodb+srv://CalcData:r5p3Gwuhn7ELIm3z@cluster0.vif5nkw.mongodb.net/?retryWrites=true&w=majority"
@@ -22,8 +21,8 @@ type User struct {
 	Password   string   `json:"password"`
 	Verefy     string   `json:"verefy"`
 	Times      []string `json:"times"`
-	Comments   []string `json:"comments"`
-	TimesWorks []string `json:"timesWorks"`
+	Coments   []string `json:"coments"`
+	Switch    []string   `json:"switch"`
 	Companets  []string `json:"companets"`
 	Token      string   `json:"token"`
 }
@@ -41,6 +40,7 @@ func main() {
 	r.GET("getuser", getUser)
 	r.GET("getusers", getAllUsers)
 	r.POST("addtime", addTime)
+	r.POST("updatetime", updateTime)
 	r.Run(":8080")
 }
 func passwordHash(password string) string {
@@ -76,8 +76,8 @@ func register(c *gin.Context) {
 		Password:   passwordHash(user.Password),
 		Verefy:     "false",
 		Times:      []string{},
-		Comments:   []string{},
-		TimesWorks: []string{},
+		Coments:   []string{},
+		Switch:    []string{},
 		Companets:  []string{},
 		Token:      createToken(user.Email),
 	}
@@ -101,14 +101,14 @@ func login(c *gin.Context) {
 	//all users in data base
 	cur, err := collection.Find(context.Background(), bson.D{})
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	defer cur.Close(ctx)
 	for cur.Next(ctx) {
 		var result User
 		err := cur.Decode(&result)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		if result.Email == user.Email {
 			if result.Verefy == "false" {
@@ -234,18 +234,18 @@ func getAllUsers(c *gin.Context) {
 		var results []*User
 		cur, err := collection.Find(context.Background(), bson.D{})
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		for cur.Next(context.Background()) {
 			var elem User
 			err := cur.Decode(&elem)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println(err)
 			}
 			results = append(results, &elem)
 		}
 		if err := cur.Err(); err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		cur.Close(context.Background())
 		//results = results[1:]
@@ -256,7 +256,17 @@ func getAllUsers(c *gin.Context) {
 }
 
 func addTime(c *gin.Context) {
-	//post authorization bearer token user db update time
+	//db get user email from token add time to user time add new time to user time array 
+	token := c.Request.Header.Get("Authorization")
+	token = token[7:len(token)]
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
 	var user User
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
@@ -267,26 +277,33 @@ func addTime(c *gin.Context) {
 	client.Connect(ctx)
 	defer client.Disconnect(ctx)
 	collection := client.Database("CalcData").Collection("users")
-	filter := bson.D{{Key: "email", Value: user.Email}}
+	filter := bson.D{{Key: "email", Value: claims["email"]}}
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
-	//add time in [{"time": "2020-12-12 12:12:12","coment","true"}] format to user db time array 
-	if result.Email == user.Email {
+	//get user times array and add new times array in times array 
+	if result.Email == claims["email"] {
+		//get user times array and add new times array in times array 
 		update := bson.D{
-			{Key: "$push", Value: bson.D{
-				{Key: "time", Value: bson.D{
-					{Key: "times", Value: user.Times},
-					{Key: "coment", Value: "user.Times[0].Coment"},
-					{Key: "verefy", Value: "user.Times[0].Verefy"},
-				}},
+			{Key: "$set", Value: bson.D{
+				{Key: "times", Value: append(result.Times, user.Times...)},
+			}},
+			{Key: "$set", Value: bson.D{
+				{Key: "coments", Value: append(result.Coments, user.Coments...)},
+			}},
+			{Key: "$set", Value: bson.D{
+				{Key: "switch", Value: append(result.Switch, user.Switch...)},
 			}},
 		}
+		
 		collection.UpdateOne(context.Background(), filter, update)
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+		c.JSON(http.StatusOK, gin.H{"message": "time added"})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+}
 
+func updateTime(c *gin.Context) {
+	//db get user 
 }
 
 func createToken(username string) string {
