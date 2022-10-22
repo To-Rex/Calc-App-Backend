@@ -308,9 +308,6 @@ func addTime(c *gin.Context) {
 }
 
 func updateTime(c *gin.Context) {
-	c.Query("index")
-	// 	//db get user {"_id":{"$oid":"63541bf79036169151d2cc41"},"email":"dev.dilshodjon@gmail.com","password":"$2a$10$JAnSdgIDFz7hbVbsDOMjf.C9QuVF3zLyZX60v91U7Zww6L42JGo8C","verefy":"true","times":["19:00","19:00","19:00","19:00","19:00","19:00","19:00"],"companets":[],"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJlbWFpbCI6ImRldi5kaWxzaG9kam9uQGdtYWlsLmNvbSJ9.aTrwf73YAEWPS06bgkorugWSq0LoeJq1zrHITGgy5TI","coments":["Ajoyib","Ajoyib","","","","",""],"switch":["0","0","","","","",""]}
- 	//update user time array index input time
 	token := c.Request.Header.Get("Authorization")
 	token = token[7:len(token)]
 	claims := jwt.MapClaims{}
@@ -334,18 +331,18 @@ func updateTime(c *gin.Context) {
 	filter := bson.D{{Key: "email", Value: claims["email"]}}
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
-	//get user times array and add new times array in times array index input time and coments input coments and switch input switch 
+
 	if result.Email == claims["email"] {
 		//get user times array and add new times array in times array
 		update := bson.D{
 			{Key: "$set", Value: bson.D{
-				{Key: "times", Value: user.Times[0]},
+				{Key: "times", Value: user.Times},
 			}},
 			{Key: "$set", Value: bson.D{
-				{Key: "coments", Value: user.Coments[0]},
+				{Key: "coments", Value: user.Coments},
 			}},
 			{Key: "$set", Value: bson.D{
-				{Key: "switch", Value: user.Switch[0]},
+				{Key: "switch", Value: user.Switch},
 			}},
 		}
 
