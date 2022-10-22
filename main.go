@@ -39,6 +39,7 @@ func main() {
 	r.GET("getuser", getUser)
 	r.GET("getusers", getAllUsers)
 	r.POST("addtime", addTime)
+	r.POST("updatetime", updateTime)
 	r.Run(":8080")
 }
 func passwordHash(password string) string {
