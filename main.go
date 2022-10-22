@@ -277,9 +277,9 @@ func addTime(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == claims["email"] {
-		//add array id auto increment time array in user db
+		
 		update := bson.D{
-			{Key: "$push", Value: bson.D{
+			{Key: "$set", Value: bson.D{
 				{Key: "times", Value: user.Times},
 			}},
 		}
@@ -289,8 +289,7 @@ func addTime(c *gin.Context) {
 }
 
 func updateTime(c *gin.Context) {
-	//{"_id":{"$oid":"6353b71356649875aca01589"},"email":"Gani@gmail.com","password":"$2a$10$UCjP8dAiyCdR7DPo9V0I2.it2IikdrdxP73WVoZ7w2pCJpjb/Oi7W","verefy":"true","times":[["09:00","salom qale","0"],["09:00","salom qale","0"],["09:00","salom qale","0"]],"companets":[],"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJlbWFpbCI6IkdhbmlAZ21haWwuY29tIn0.I8RA_hRIY_kfj65ZtNGtmpYsarLwFQIDC5xBZbxFnGY"} 
-	token := c.Request.Header.Get("Authorization")
+ 	token := c.Request.Header.Get("Authorization")
 	token = token[7:len(token)]
 	claims := jwt.MapClaims{}
 	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
@@ -313,7 +312,16 @@ func updateTime(c *gin.Context) {
 	filter := bson.D{{Key: "email", Value: claims["email"]}}
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
-	
+	//{"times":[["09:00","salom qale","0"],["09:00","salom qale","0"],["09:00","salom qale","0"],["09:00","salom qale","0"]]} update arrays index
+	if result.Email == claims["email"] {
+		update := bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "times", Value: user.Times},
+			}},
+		}
+		collection.UpdateOne(context.Background(), filter, update)
+		c.JSON(http.StatusOK, gin.H{"message": "time updated"})
+	}
 }
 
 func createToken(username string) string {
