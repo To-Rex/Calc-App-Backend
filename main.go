@@ -40,6 +40,7 @@ func main() {
 	r.GET("getuser", getUser)
 	r.GET("getusers", getAllUsers)
 	r.POST("addtime", addTime)
+	r.GET("gettimes", getTimes)
 	r.POST("updatetime", updateTime)
 	r.Run(":8080")
 }
@@ -289,6 +290,37 @@ func addTime(c *gin.Context) {
 	}
 }
 
+func getTimes(c *gin.Context) {
+	//get authorization bearer token return all times array in user db
+	token := c.Request.Header.Get("Authorization")
+	token = token[7:len(token)]
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	var user User
+	c.BindJSON(&user)
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: claims["email"]}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == claims["email"] {
+		c.JSON(http.StatusOK, result.Times)
+		return
+	}
+}
+
 func updateTime(c *gin.Context) {
  	token := c.Request.Header.Get("Authorization")
 	token = token[7:len(token)]
@@ -316,6 +348,7 @@ func updateTime(c *gin.Context) {
 	if result.Email == claims["email"] {
 		update := bson.D{
 			{Key: "$set", Value: bson.D{
+				{Key: "times", Value: user.Times},
 				{Key: "times", Value: user.Times},
 			}},
 		}
