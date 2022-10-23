@@ -437,7 +437,7 @@ func getTimes(c *gin.Context) {
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
 
-func sendEmailVerefication(c *gin.Context) {
+func sendEmailVerefy(c *gin.Context) {
 	auth :=smtp.PlainAuth(
 		"",
 		"dev.dilshodjon@gmail.com",
@@ -456,5 +456,5 @@ func sendEmailVerefication(c *gin.Context) {
 	 if err != nil {
 		fmt.Println(err)
 	 }
-	 
+
 }
