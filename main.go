@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"os"
-	"time"
-	"net/smtp"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
+	"net/http"
+	"net/smtp"
+	"os"
+	"time"
 )
 
 const uri = "mongodb+srv://CalcData:r5p3Gwuhn7ELIm3z@cluster0.vif5nkw.mongodb.net/?retryWrites=true&w=majority"
@@ -46,9 +46,8 @@ func main() {
 	r.GET("gettimes", getTimes)
 	r.POST("sendemailverefy", sendEmailVerefy)
 	r.Run(":8080")
-	
-}
 
+}
 
 func createToken(username string) string {
 	claims := jwt.MapClaims{}
@@ -438,23 +437,30 @@ func getTimes(c *gin.Context) {
 }
 
 func sendEmailVerefy(c *gin.Context) {
-	auth :=smtp.PlainAuth(
+	sendMailSimple()
+}
+
+func sendMailSimple() {
+	auth := smtp.PlainAuth(
 		"",
 		"dev.dilshodjon@gmail.com",
-	 	"soxjmnnrefcncvix",
- 		"smtp.gmail.com",
- 	)
+		"soxjmnnrefcncvix",
+		"smtp.gmail.com",
+	)
 
-	 msg := "subject: massage send code"
-	 err :=smtp.SendMail(
+	msg := "subject: massage send code"
+
+	err := smtp.SendMail(
 		"smtp.gmail.com:587",
- 		auth,
- 		"dev.dilshodjon@gmail.com",
- 		[]string{"dev.dilshodjon@gmail.com"},
- 		[]byte(msg),
-	 )
-	 if err != nil {
+		auth,
+		"doimjonovasadbek1002@gmail.com",
+		[]string{"doimjonovasadbek1002@gmail.com"},
+		[]byte(msg),
+	)
+	if err != nil {
 		fmt.Println(err)
-	 }
+	}else{
+		fmt.Println("send")
+	}
 
 }
