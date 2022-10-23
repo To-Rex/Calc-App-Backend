@@ -194,7 +194,7 @@ func verefyUser(c *gin.Context) {
 	if result.Email == user.Email {
 		update := bson.D{
 			{Key: "$set", Value: bson.D{
-				{Key: "verefy", Value: "true"},
+				{Key: "verefy", Value: true},
 			}},
 		}
 		collection.UpdateOne(context.Background(), filter, update)
