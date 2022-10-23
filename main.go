@@ -47,7 +47,7 @@ func main() {
 	r.POST("updatetime", updateTime)
 	r.POST("updatecompanets", updateCompanets)
 	r.GET("gettimes", getTimes)
-	r.POST("resendverefy", resendVerefy)
+	r.POST("resendverefy", resendVerefyCode)
 	r.Run(":8080")
 
 }
@@ -90,6 +90,9 @@ func register(c *gin.Context) {
 		return
 	}
 	verefy := rand.Intn(999999)
+	if verefy < 100000 {
+		verefy += 100000
+	}
 	user = User{
 		Email:     user.Email,
 		Password:  passwordHash(user.Password),
@@ -102,7 +105,7 @@ func register(c *gin.Context) {
 	}
 	user.Token = createToken(user.Email)
 	collection.InsertOne(context.Background(), user)
-	sendMailSimple(user.Email,strconv.Itoa(verefy))
+	sendMailSimple(user.Email, strconv.Itoa(verefy))
 
 	c.JSON(http.StatusOK, gin.H{"token": user.Token, "verefy": verefy})
 	if err != nil {
@@ -445,8 +448,8 @@ func getTimes(c *gin.Context) {
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
 
-func sendMailSimple(email string,code string) {
-	auth :=smtp.PlainAuth(
+func sendMailSimple(email string, code string) {
+	auth := smtp.PlainAuth(
 		"",
 		"uz.yorvoration@gmail.com",
 		"cpjiovhtsffdpmys",
@@ -455,21 +458,52 @@ func sendMailSimple(email string,code string) {
 
 	headers := "MiME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	subject := "Verify your email"
-	html := "<h1>Verification code</h1><p>"+code+"</p>"
+	html := "<h1>Verification code</h1><p>" + code + "</p>"
 	msg := "Subject: " + subject + " \n" + headers + html
-	 
-	err :=smtp.SendMail(
+
+	err := smtp.SendMail(
 		"smtp.gmail.com:587",
 		auth,
 		email,
 		[]string{email},
 		[]byte(msg),
-	) 
+	)
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
 func resendVerefyCode(c *gin.Context) {
-	sendMailSimple()
+	var user User
+	c.BindJSON(&user)
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: user.Email}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == user.Email {
+		a := result.Verefy
+		if  a == "false" {
+			verefy := rand.Intn(999999)
+			if verefy < 100000 {
+				verefy += 100000
+			}
+			verefy += 1
+			verefyCode := strconv.Itoa(verefy)
+			c.JSON(http.StatusOK, gin.H{"verefyCode": verefyCode})
+			sendMailSimple(user.Email, verefyCode)
+		}else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "email is already verified"})
+			return
+		}
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+
 }
