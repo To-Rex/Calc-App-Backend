@@ -441,26 +441,23 @@ func sendEmailVerefy(c *gin.Context) {
 }
 
 func sendMailSimple() {
-	auth := smtp.PlainAuth(
+	auth :=smtp.PlainAuth(
 		"",
-		"dev.dilshodjon@gmail.com",
-		"soxjmnnrefcncvix",
+		"uz.yorvoration@gmail.com",
+		"cpjiovhtsffdpmys",
 		"smtp.gmail.com",
 	)
 
 	msg := "subject: massage send code"
 
-	err := smtp.SendMail(
+	err :=smtp.SendMail(
 		"smtp.gmail.com:587",
 		auth,
-		"doimjonovasadbek1002@gmail.com",
-		[]string{"doimjonovasadbek1002@gmail.com"},
+		"dev.dilshodjon@gmail.com",
+		[]string{"dev.dilshodjon@gmail.com"},
 		[]byte(msg),
-	)
+	) 
 	if err != nil {
 		fmt.Println(err)
-	}else{
-		fmt.Println("send")
 	}
-
 }
