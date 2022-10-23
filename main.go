@@ -417,6 +417,7 @@ func updateCompanets(c *gin.Context) {
 		c.JSON(http.StatusOK, result)
 		return
 	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
 
 func getTimes(c *gin.Context) {
