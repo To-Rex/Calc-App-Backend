@@ -42,6 +42,7 @@ func main() {
 	r.GET("getusers", getAllUsers)
 	r.POST("addtime", addTime)
 	r.POST("updatetime", updateTime)
+	r.POST("updatecompanets", updateCompanets)
 	r.Run(":8080")
 	
 }
@@ -348,6 +349,47 @@ func updateTime(c *gin.Context) {
 		collection.UpdateOne(context.Background(), filter, update)
 		collection.FindOne(context.Background(), filter).Decode(&result)
 		result = User{Times: result.Times, Coments: result.Coments, Switch: result.Switch}
+		c.JSON(http.StatusOK, result)
+		return
+	}
+}
+
+func updateCompanets(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	token = token[7:len(token)]
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	var user User
+	c.BindJSON(&user)
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: claims["email"]}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+
+	if result.Email == claims["email"] {
+		//get user times array and add new times array in times array
+		update := bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "components", Value: user.Companets},
+			}},
+		}
+
+		collection.UpdateOne(context.Background(), filter, update)
+		collection.FindOne(context.Background(), filter).Decode(&result)
+		result = User{Companets: result.Companets}
 		c.JSON(http.StatusOK, result)
 		return
 	}
