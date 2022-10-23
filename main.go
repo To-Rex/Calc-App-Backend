@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	//"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
