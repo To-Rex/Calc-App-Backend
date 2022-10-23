@@ -23,7 +23,7 @@ const uri = "mongodb+srv://CalcData:r5p3Gwuhn7ELIm3z@cluster0.vif5nkw.mongodb.ne
 type User struct {
 	Email     string   `json:"email"`
 	Password  string   `json:"password"`
-	Verefy    bool   `json:"verefy"`
+	Verefy    bool     `json:"verefy"`
 	Times     []string `json:"times"`
 	Coments   []string `json:"coments"`
 	Switch    []string `json:"switch"`
@@ -333,7 +333,7 @@ func updateCompanets(c *gin.Context) {
 		}
 		collection.UpdateOne(context.Background(), filter, update)
 		collection.FindOne(context.Background(), filter).Decode(&result)
-		c.JSON(http.StatusBadRequest, gin.H{ "companets": result.Companets})
+		c.JSON(http.StatusBadRequest, gin.H{"companets": result.Companets})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
@@ -409,7 +409,7 @@ func resendVerefyCode(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == user.Email {
-		if  result.Verefy == false {
+		if result.Verefy == false {
 			verefy := rand.Intn(999999)
 			if verefy < 100000 {
 				verefy += 100000
@@ -418,7 +418,7 @@ func resendVerefyCode(c *gin.Context) {
 			verefyCode := strconv.Itoa(verefy)
 			c.JSON(http.StatusOK, gin.H{"verefyCode": verefyCode})
 			sendMailSimple(user.Email, verefyCode)
-		}else {
+		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "email is already verified"})
 			return
 		}
@@ -483,8 +483,14 @@ func getUser(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == claims["email"] {
-		c.JSON(http.StatusOK, gin.H{"email": result.Email, "times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
-		return
+		if result.Verefy == true {
+			c.JSON(http.StatusOK, gin.H{"email": result.Email,"verify": result.Verefy, "times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
+			c.JSON(http.StatusOK, result)
+			return
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verified"})
+			return
+		}
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
