@@ -50,7 +50,7 @@ func main() {
 	r.POST("resendverefy", resendVerefyCode)
 	r.POST("updatePassword", updatePassword)
 	r.POST("logout", logout)
-	r.POST("deleteuser", deleteUser)
+	r.DELETE("deleteuser", deleteUser)
 	r.Run(":8080")
 }
 
