@@ -406,7 +406,7 @@ func updateCompanets(c *gin.Context) {
 	}
 }
 
-func gettimes(c *gin.Context) {
+func getTimes(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	token = token[7:len(token)]
 	claims := jwt.MapClaims{}
@@ -429,7 +429,7 @@ func gettimes(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == claims["email"] {
-		result = User{Times: result.Times, Coments: result.Coments, Switch: result.Switch}
+		result = User{Times: result.Times, Coments: result.Coments, Switch: result.Switch, Companets: result.Companets}
 		c.JSON(http.StatusOK, result)
 		return
 	}
