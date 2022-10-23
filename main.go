@@ -43,9 +43,21 @@ func main() {
 	r.POST("addtime", addTime)
 	r.POST("updatetime", updateTime)
 	r.POST("updatecompanets", updateCompanets)
+	r.GET("gettimes", getTimes)
 	r.Run(":8080")
 	
 }
+
+
+func createToken(username string) string {
+	claims := jwt.MapClaims{}
+	claims["authorized"] = true
+	claims["email"] = username
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, _ := token.SignedString([]byte(os.Getenv("SECRET")))
+	return tokenString
+}
+
 func passwordHash(password string) string {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
@@ -386,7 +398,6 @@ func updateCompanets(c *gin.Context) {
 				{Key: "companets", Value: user.Companets},
 			}},
 		}
-
 		collection.UpdateOne(context.Background(), filter, update)
 		collection.FindOne(context.Background(), filter).Decode(&result)
 		result = User{Companets: result.Companets}
@@ -395,11 +406,33 @@ func updateCompanets(c *gin.Context) {
 	}
 }
 
-func createToken(username string) string {
+func gettimes(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	token = token[7:len(token)]
 	claims := jwt.MapClaims{}
-	claims["authorized"] = true
-	claims["email"] = username
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString([]byte(os.Getenv("SECRET")))
-	return tokenString
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: claims["email"]}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == claims["email"] {
+		result = User{Times: result.Times, Coments: result.Coments, Switch: result.Switch}
+		c.JSON(http.StatusOK, result)
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
+
