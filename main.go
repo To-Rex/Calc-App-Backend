@@ -1,3 +1,4 @@
+//bismillaxir roxmanir roxim
 package main
 
 import (
@@ -152,6 +153,8 @@ func login(c *gin.Context) {
 			c.JSON(http.StatusOK, Token{Token: createToken(user.Email)})
 			return
 		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email is not exist"})
+		return
 	}
 }
 
@@ -243,11 +246,9 @@ func addTime(c *gin.Context) {
 				{Key: "switch", Value: append(result.Switch, user.Switch...)},
 			}},
 		}
-
 		collection.UpdateOne(context.Background(), filter, update)
 		collection.FindOne(context.Background(), filter).Decode(&result)
-		result = User{Times: result.Times, Coments: result.Coments, Switch: result.Switch}
-		c.JSON(http.StatusOK, result)
+		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
@@ -294,8 +295,7 @@ func updateTime(c *gin.Context) {
 
 		collection.UpdateOne(context.Background(), filter, update)
 		collection.FindOne(context.Background(), filter).Decode(&result)
-		result = User{Times: result.Times, Coments: result.Coments, Switch: result.Switch}
-		c.JSON(http.StatusOK, result)
+		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch,"companets":result.Companets})
 		return
 	}
 }
@@ -334,7 +334,7 @@ func updateCompanets(c *gin.Context) {
 		}
 		collection.UpdateOne(context.Background(), filter, update)
 		collection.FindOne(context.Background(), filter).Decode(&result)
-		c.JSON(http.StatusBadRequest, gin.H{"companets": result.Companets})
+		c.JSON(http.StatusOK, gin.H{"companets": result.Companets})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
@@ -363,8 +363,7 @@ func getTimes(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == claims["email"] {
-		result = User{Times: result.Times, Coments: result.Coments, Switch: result.Switch, Companets: result.Companets}
-		c.JSON(http.StatusOK, result)
+		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch,"companets":result.Companets})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
@@ -454,8 +453,7 @@ func updatePassword(c *gin.Context) {
 		}
 		collection.UpdateOne(context.Background(), filter, update)
 		collection.FindOne(context.Background(), filter).Decode(&result)
-		result = User{Email: result.Email}
-		c.JSON(http.StatusOK, result)
+		c.JSON(http.StatusOK, gin.H{"message": "password updated"})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
@@ -486,7 +484,6 @@ func getUser(c *gin.Context) {
 	if result.Email == claims["email"] {
 		if result.Verefy == true {
 			c.JSON(http.StatusOK, gin.H{"email": result.Email,"verify": result.Verefy, "times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
-			c.JSON(http.StatusOK, result)
 			return
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verified"})
