@@ -47,7 +47,7 @@ func main() {
 	r.POST("updatetime", updateTime)
 	r.POST("updatecompanets", updateCompanets)
 	r.GET("gettimes", getTimes)
-	//r.POST("sendemailverefy", sendEmailVerefy)
+	r.POST("resendverefy", resendVerefy)
 	r.Run(":8080")
 
 }
@@ -468,4 +468,8 @@ func sendMailSimple(email string,code string) {
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+func resendVerefyCode(c *gin.Context) {
+	sendMailSimple()
 }
