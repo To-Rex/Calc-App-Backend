@@ -203,87 +203,6 @@ func verefyUser(c *gin.Context) {
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
 
-func getUser(c *gin.Context) {
-	token := c.Request.Header.Get("Authorization")
-	token = token[7:len(token)]
-	claims := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte("secret"), nil
-	})
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "token is incorrect"})
-		return
-	}
-	email := claims["email"].(string)
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	if err != nil {
-		fmt.Println(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client.Connect(ctx)
-	defer client.Disconnect(ctx)
-	collection := client.Database("CalcData").Collection("users")
-	filter := bson.D{{Key: "email", Value: email}}
-	var result User
-	collection.FindOne(context.Background(), filter).Decode(&result)
-	if result.Email == email {
-		c.JSON(http.StatusBadRequest, gin.H{result.Email: result.Email, "verefy": result.Verefy, "times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets, "token": result.Token})
-		c.JSON(http.StatusOK, result)
-		return
-	}
-	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
-}
-
-func getAllUsers(c *gin.Context) {
-	//get authorization bearer token user db return all users all data
-	token := c.Request.Header.Get("Authorization")
-	token = token[7:len(token)]
-	claims := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("SECRET")), nil
-	})
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-		return
-	}
-	var user User
-	c.BindJSON(&user)
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	if err != nil {
-		fmt.Println(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client.Connect(ctx)
-	defer client.Disconnect(ctx)
-	collection := client.Database("CalcData").Collection("users")
-	filter := bson.D{{Key: "email", Value: claims["email"]}}
-	var result User
-	collection.FindOne(context.Background(), filter).Decode(&result)
-	if result.Email == claims["email"] {
-		var results []*User
-		cur, err := collection.Find(context.Background(), bson.D{})
-		if err != nil {
-			fmt.Println(err)
-		}
-		for cur.Next(context.Background()) {
-			var elem User
-			err := cur.Decode(&elem)
-			if err != nil {
-				fmt.Println(err)
-			}
-			results = append(results, &elem)
-		}
-		if err := cur.Err(); err != nil {
-			fmt.Println(err)
-		}
-		cur.Close(context.Background())
-		results = results[1:]
-		c.JSON(http.StatusOK, results)
-		return
-	}
-	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
-}
-
 func addTime(c *gin.Context) {
 	//db get user email from token add time to user time add new time to user time array
 	token := c.Request.Header.Get("Authorization")
@@ -540,4 +459,63 @@ func updatePassword(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+}
+
+func getUser(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	token = token[7:len(token)]
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: claims["email"]}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == claims["email"] {
+		c.JSON(http.StatusOK, gin.H{"email": result.Email, "times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+}
+
+func getAllUsers(c *gin.Context) {
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	var result []User
+	cur, err := collection.Find(context.Background(), bson.D{})
+	if err != nil {
+		fmt.Println(err)
+	}
+	for cur.Next(context.Background()) {
+		var elem User
+		err := cur.Decode(&elem)
+		if err != nil {
+			fmt.Println(err)
+		}
+		result = append(result, elem)
+	}
+	if err := cur.Err(); err != nil {
+		fmt.Println(err)
+	}
+	cur.Close(context.Background())
+	//return email,verefy,times,coments,switch,companets
+	c.JSON(http.StatusOK, result)
 }
