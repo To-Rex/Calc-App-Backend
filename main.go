@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"time"
-
+	"net/smtp"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -44,6 +44,7 @@ func main() {
 	r.POST("updatetime", updateTime)
 	r.POST("updatecompanets", updateCompanets)
 	r.GET("gettimes", getTimes)
+	r.POST("sendemailverefy", sendEmailVerefy)
 	r.Run(":8080")
 	
 }
@@ -436,3 +437,10 @@ func getTimes(c *gin.Context) {
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
 
+func sendEmailVerefication(c *gin.Context) {
+	auth :=smtp.PlainAuth(
+		"",
+		"dev.dilshodjon@gmail.com",
+	 	"soxjmnnrefcncvix",
+ 		"smtp.gmail.com",
+ 	)
