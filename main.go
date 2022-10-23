@@ -48,6 +48,7 @@ func main() {
 	r.POST("updatecompanets", updateCompanets)
 	r.GET("gettimes", getTimes)
 	r.POST("resendverefy", resendVerefyCode)
+	r.POST("updatePassword", updatePassword)
 	r.Run(":8080")
 
 }
@@ -505,5 +506,37 @@ func resendVerefyCode(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+}
 
+func updatePassword(c *gin.Context) {
+	var user User
+	c.BindJSON(&user)
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: user.Email}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == user.Email {
+		hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+		if err != nil {
+			fmt.Println(err)
+		}
+		update := bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "password", Value: string(hash)},
+			}},
+		}
+		collection.UpdateOne(context.Background(), filter, update)
+		collection.FindOne(context.Background(), filter).Decode(&result)
+		result = User{Email: result.Email}
+		c.JSON(http.StatusOK, result)
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
