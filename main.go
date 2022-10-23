@@ -444,3 +444,17 @@ func sendEmailVerefication(c *gin.Context) {
 	 	"soxjmnnrefcncvix",
  		"smtp.gmail.com",
  	)
+
+	 msg := "subject: massage send code"
+	 err :=smtp.SendMail(
+		"smtp.gmail.com:587",
+ 		auth,
+ 		"doimjonovasadbek1002@gmail.com",
+ 		[]string{"doimjonovasadbek1002@gmail.com"},
+ 		[]byte(msg),
+	 )
+	 if err != nil {
+		fmt.Println(err)
+	 }
+	 
+}
