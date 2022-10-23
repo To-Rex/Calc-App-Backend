@@ -50,6 +50,7 @@ func main() {
 	r.POST("resendverefy", resendVerefyCode)
 	r.POST("updatePassword", updatePassword)
 	r.POST("logout", logout)
+	r.POST("deleteuser", deleteUser)
 	r.Run(":8080")
 }
 
@@ -552,4 +553,41 @@ func logout(c *gin.Context) {
 	}
 	collection.UpdateOne(context.Background(), filter, update)
 	c.JSON(http.StatusOK, gin.H{"message": "logout"})
+}
+
+func deleteAllUsers(c *gin.Context) {
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	collection.Drop(context.Background())
+	c.JSON(http.StatusOK, gin.H{"message": "delete all users"})
+}
+
+func deleteUser(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	token = token[7:len(token)]
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: claims["email"]}}
+	collection.DeleteOne(context.Background(), filter)
+	c.JSON(http.StatusOK, gin.H{"message": "delete user"})
 }
