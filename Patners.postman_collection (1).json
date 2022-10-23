@@ -1,0 +1,321 @@
+{
+	"info": {
+		"_postman_id": "fb4b113f-4030-4205-b9c7-ae7a6655e230",
+		"name": "Patners",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20559681"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "get Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJlbWFpbCI6IkdhbmlAZ21haWwuY29tIn0.I8RA_hRIY_kfj65ZtNGtmpYsarLwFQIDC5xBZbxFnGY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/getusers",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"getusers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get user",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOjAsImVtYWlsIjoieGFzYW50b3lAZ21haWwiLCJuYW1lIjoidG95IiwicGFzc3dvcmQiOiIxMjM0IiwidXNlcm5hbWUiOiJYYXNhbiJ9.-vvxOBBMHRuW0MVQufVhyz5R_1kgZcFC5AibgWDeSPs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"qwerty12\",\n    \"password\": \"1234\",\n    \"name\": \"Dilshodjon1\",\n    \"age\": 0,\n    \"email\": \"Dilshodjondev1@gmail\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/getuser",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"getuser"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "post Email",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"dev.dilshojdon2@gmail.com\",\n    \"password\": \"123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/login",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "post Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"ali@gmail.com\",\n    \"password\": \"1234\",\n    \"verify\": 0,\n    \"times\": \"[]\",\n    \"coments\": \"[]\",\n    \"timesWorks\": \"[]\",\n    \"companets\": \"[]\",\n    \"token\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/register",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJlbWFpbCI6InF3ZXJ0eTEyIn0.IMqM-2O6tvsz64ty2aPhKyWXm0fhMEmI74j7YGtJLPI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/deleteuser",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"deleteuser"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "check Verefy user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"ali@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/cheskverefy",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"cheskverefy"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify user",
+					"request": {
+						"method": "POST",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "sendEmailVerify",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/sendemailverefy",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"sendemailverefy"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdatePassword",
+					"request": {
+						"method": "POST",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "LogOut",
+					"request": {
+						"method": "POST",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Times",
+			"item": [
+				{
+					"name": "updateTime",
+					"request": {
+						"method": "POST",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "AddTime",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "addtime",
+							"host": [
+								"addtime"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getTimes",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "updateCompanents",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJlbWFpbCI6ImRldi5kaWxzaG9kam9uQGdtYWlsLmNvbSJ9.aTrwf73YAEWPS06bgkorugWSq0LoeJq1zrHITGgy5TI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "localhost:8080/updatetime?index=color",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"updatetime"
+							],
+							"query": [
+								{
+									"key": "index",
+									"value": "color"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getTimes",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
