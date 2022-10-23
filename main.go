@@ -449,8 +449,8 @@ func sendEmailVerefy(c *gin.Context) {
 	 err :=smtp.SendMail(
 		"smtp.gmail.com:587",
  		auth,
- 		"doimjonovasadbek1002@gmail.com",
- 		[]string{"doimjonovasadbek1002@gmail.com"},
+ 		"dev.dilshodjon@gmail.com",
+ 		[]string{"dev.dilshodjon@gmail.com"},
  		[]byte(msg),
 	 )
 	 if err != nil {
