@@ -51,7 +51,7 @@ func main() {
 	r.POST("updatePassword", updatePassword)
 	r.POST("logout", logout)
 	r.DELETE("deleteuser", deleteUser)
-	r.Run(":8080")
+	r.Run()
 }
 
 func createToken(username string) string {
