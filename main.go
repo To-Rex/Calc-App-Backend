@@ -383,7 +383,7 @@ func updateCompanets(c *gin.Context) {
 		//get user times array and add new times array in times array
 		update := bson.D{
 			{Key: "$set", Value: bson.D{
-				{Key: "components", Value: user.Companets},
+				{Key: "companets", Value: user.Companets},
 			}},
 		}
 
