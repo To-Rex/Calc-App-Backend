@@ -437,10 +437,10 @@ func getTimes(c *gin.Context) {
 }
 
 func sendEmailVerefy(c *gin.Context) {
-	sendMailSimple()
+	sendMailSimple("dev.dilshodjon@gmail.com","1234")
 }
 
-func sendMailSimple() {
+func sendMailSimple(email string,code string) {
 	auth :=smtp.PlainAuth(
 		"",
 		"uz.yorvoration@gmail.com",
@@ -448,8 +448,11 @@ func sendMailSimple() {
 		"smtp.gmail.com",
 	)
 
-	msg := "subject: massage send code"
-
+	headers := "MiME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	subject := "Verify your email"
+	html := "<h1>Verification code</h1><p>"+code+"</p>"
+	msg := "Subject: " + subject + " \n" + headers + html
+	 
 	err :=smtp.SendMail(
 		"smtp.gmail.com:587",
 		auth,
