@@ -3,16 +3,19 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"net/http"
+	"net/smtp"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
-	"net/smtp"
-	"os"
-	"time"
 )
 
 const uri = "mongodb+srv://CalcData:r5p3Gwuhn7ELIm3z@cluster0.vif5nkw.mongodb.net/?retryWrites=true&w=majority"
@@ -44,7 +47,7 @@ func main() {
 	r.POST("updatetime", updateTime)
 	r.POST("updatecompanets", updateCompanets)
 	r.GET("gettimes", getTimes)
-	r.POST("sendemailverefy", sendEmailVerefy)
+	//r.POST("sendemailverefy", sendEmailVerefy)
 	r.Run(":8080")
 
 }
@@ -86,6 +89,7 @@ func register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "email already exist"})
 		return
 	}
+	verefy := rand.Intn(999999)
 	user = User{
 		Email:     user.Email,
 		Password:  passwordHash(user.Password),
@@ -98,7 +102,12 @@ func register(c *gin.Context) {
 	}
 	user.Token = createToken(user.Email)
 	collection.InsertOne(context.Background(), user)
-	c.JSON(http.StatusOK, user)
+	sendMailSimple(user.Email,strconv.Itoa(verefy))
+
+	c.JSON(http.StatusOK, gin.H{"token": user.Token, "verefy": verefy})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
+	}
 }
 
 func login(c *gin.Context) {
@@ -436,10 +445,6 @@ func getTimes(c *gin.Context) {
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
 
-func sendEmailVerefy(c *gin.Context) {
-	sendMailSimple("dev.dilshodjon@gmail.com","1234")
-}
-
 func sendMailSimple(email string,code string) {
 	auth :=smtp.PlainAuth(
 		"",
@@ -456,8 +461,8 @@ func sendMailSimple(email string,code string) {
 	err :=smtp.SendMail(
 		"smtp.gmail.com:587",
 		auth,
-		"dev.dilshodjon@gmail.com",
-		[]string{"dev.dilshodjon@gmail.com"},
+		email,
+		[]string{email},
 		[]byte(msg),
 	) 
 	if err != nil {
