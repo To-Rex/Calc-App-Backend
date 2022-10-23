@@ -227,6 +227,7 @@ func getUser(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == email {
+		c.JSON(http.StatusBadRequest, gin.H{result.Email: result.Email, "verefy": result.Verefy, "times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets, "token": result.Token})
 		c.JSON(http.StatusOK, result)
 		return
 	}
@@ -276,11 +277,11 @@ func getAllUsers(c *gin.Context) {
 			fmt.Println(err)
 		}
 		cur.Close(context.Background())
-		//results = results[1:]
-
+		results = results[1:]
 		c.JSON(http.StatusOK, results)
 		return
 	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
 
 func addTime(c *gin.Context) {
@@ -413,8 +414,7 @@ func updateCompanets(c *gin.Context) {
 		}
 		collection.UpdateOne(context.Background(), filter, update)
 		collection.FindOne(context.Background(), filter).Decode(&result)
-		result = User{Companets: result.Companets}
-		c.JSON(http.StatusOK, result)
+		c.JSON(http.StatusBadRequest, gin.H{ "companets": result.Companets})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
