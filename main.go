@@ -10,7 +10,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -149,12 +148,14 @@ func login(c *gin.Context) {
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "password is incorrect"})
 				return
+			} else{
+				c.JSON(http.StatusOK, gin.H{"token": result.Token})
+				return
 			}
-			c.JSON(http.StatusOK, Token{Token: createToken(user.Email)})
+		} else{
+			c.JSON(http.StatusBadRequest, gin.H{"error": "email is not exist"})
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": "email is not exist"})
-		return
 	}
 }
 
