@@ -176,8 +176,10 @@ func cheskverefy(c *gin.Context) {
 	if result.Email == user.Email {
 		c.JSON(http.StatusOK, gin.H{"verefy": result.Verefy})
 		return
+	}else{
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email is not exist"})
+		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
 
 func verefyUser(c *gin.Context) {
