@@ -1,4 +1,4 @@
-//bismillaxir roxmanir roxim
+// bismillaxir roxmanir roxim
 package main
 
 import (
@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"net/smtp"
+
+	//"net/smtp"
 	"os"
 	"strconv"
 	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/trycourier/courier-go/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -70,6 +73,51 @@ func passwordHash(password string) string {
 		fmt.Println(err)
 	}
 	return string(hash)
+}
+
+func sendMailSimple(email string, code string) {
+	client := courier.CreateClient("pk_prod_K10S0E6XF2MSA5MFK6E33ECTFJ9M", nil)
+    requestID, err := client.SendMessage(
+      context.Background(),
+      courier.SendMessageRequestBody{
+        Message: map[string]interface{}{
+          "to": map[string]string{
+            "email": email,
+          },
+          "template": "K4PMX20GEM4121GAFQJBH30JSSGD",
+          "data": map[string]string{
+            "recipientName": code,
+          },
+        },
+      },
+    )
+    if err != nil {
+      fmt.Println(err)
+	} else {
+	  fmt.Println(requestID)
+	}
+	// auth := smtp.PlainAuth(
+	// 	"",
+	// 	"uz.yorvoration@gmail.com",
+	// 	"cpjiovhtsffdpmys",
+	// 	"smtp.gmail.com",
+	// )
+
+	// headers := "MiME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	// subject := "Verify your email"
+	// html := "<h1>Verification code</h1><p>" + code + "</p>"
+	// msg := "Subject: " + subject + " \n" + headers + html
+
+	// err := smtp.SendMail(
+	// 	"smtp.gmail.com:587",
+	// 	auth,
+	// 	email,
+	// 	[]string{email},
+	// 	[]byte(msg),
+	// )
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
 }
 
 func register(c *gin.Context) {
@@ -328,31 +376,6 @@ func getTimes(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
-}
-
-func sendMailSimple(email string, code string) {
-	auth := smtp.PlainAuth(
-		"",
-		"uz.yorvoration@gmail.com",
-		"cpjiovhtsffdpmys",
-		"smtp.gmail.com",
-	)
-
-	headers := "MiME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	subject := "Verify your email"
-	html := "<h1>Verification code</h1><p>" + code + "</p>"
-	msg := "Subject: " + subject + " \n" + headers + html
-
-	err := smtp.SendMail(
-		"smtp.gmail.com:587",
-		auth,
-		email,
-		[]string{email},
-		[]byte(msg),
-	)
-	if err != nil {
-		fmt.Println(err)
-	}
 }
 
 func resendVerefyCode(c *gin.Context) {

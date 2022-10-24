@@ -6,6 +6,7 @@ require go.mongodb.org/mongo-driver v1.10.3
 
 require (
 	github.com/AfterShip/email-verifier v1.3.0 // indirect
+	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -23,6 +24,7 @@ require (
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/spf13/viper v1.7.1 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/trycourier/courier-go/v2 v2.7.0 // indirect
 	github.com/twilio/twilio-go v1.0.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
@@ -32,6 +34,7 @@ require (
 require (
 	github.com/d-vignesh/go-jwt-auth v0.0.0-20201213154834-8d28638128fe
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/emersion/go-smtp v0.15.0
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.8.1 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
