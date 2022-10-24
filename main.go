@@ -39,7 +39,7 @@ type Token struct {
 func main() {
 	r := gin.Default()
 	r.POST("register", register)
-	r.GET("login", login)
+	r.POST("login", login)
 	r.POST("cheskverefy", cheskverefy)
 	r.POST("verefyuser", verefyUser)
 	r.GET("getuser", getUser)
