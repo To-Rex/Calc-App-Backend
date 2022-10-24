@@ -24,6 +24,7 @@ type User struct {
 	Email     string   `json:"email"`
 	Password  string   `json:"password"`
 	Verefy    bool     `json:"verefy"`
+	Blocked   bool     `json:"blocked"`
 	Times     []string `json:"times"`
 	Coments   []string `json:"coments"`
 	Switch    []string `json:"switch"`
@@ -99,6 +100,7 @@ func register(c *gin.Context) {
 		Email:     user.Email,
 		Password:  passwordHash(user.Password),
 		Verefy:    false,
+		Blocked:   false,
 		Times:     []string{},
 		Coments:   []string{},
 		Switch:    []string{},
@@ -112,50 +114,6 @@ func register(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": user.Token, "verefy": verefy})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
-	}
-}
-
-func login(c *gin.Context) {
-	//if verfy is false return error if true return token
-	var user User
-	c.BindJSON(&user)
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	if err != nil {
-		fmt.Println(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client.Connect(ctx)
-	defer client.Disconnect(ctx)
-	collection := client.Database("CalcData").Collection("users")
-	//all users in data base
-	cur, err := collection.Find(context.Background(), bson.D{})
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer cur.Close(ctx)
-	for cur.Next(ctx) {
-		var result User
-		err := cur.Decode(&result)
-		if err != nil {
-			fmt.Println(err)
-		}
-		if result.Email == user.Email {
-			if result.Verefy == false {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verifed"})
-				return
-			}
-			err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password))
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "password is incorrect"})
-				return
-			} else{
-				c.JSON(http.StatusOK, gin.H{"token": result.Token})
-				return
-			}
-		} else{
-			c.JSON(http.StatusBadRequest, gin.H{"error": "email is not exist"})
-			return
-		}
 	}
 }
 
@@ -577,4 +535,41 @@ func deleteUser(c *gin.Context) {
 	filter := bson.D{{Key: "email", Value: claims["email"]}}
 	collection.DeleteOne(context.Background(), filter)
 	c.JSON(http.StatusOK, gin.H{"message": "delete user"})
+}
+func login(c *gin.Context) {
+	//if user verify true treturn token else return error message
+	var user User
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: user.Email}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Email == user.Email {
+		if result.Verefy == true {
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"email": result.Email,
+			})
+			tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
+			if err != nil {
+				fmt.Println(err)
+			}
+			c.JSON(http.StatusOK, gin.H{"token": tokenString})
+			return
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verified"})
+			return
+		}
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+
 }
