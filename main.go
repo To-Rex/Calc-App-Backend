@@ -72,29 +72,39 @@ func passwordHash(password string) string {
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println(string(hash))
 	return string(hash)
+}
+//bcrypt.GenerateFromPassword([]byte(password), 10) //hashing the password with the default cost of 10 
+func passwordCheck(password string, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	return true
 }
 
 func sendMailSimple(email string, code string) {
 	client := courier.CreateClient("pk_prod_K10S0E6XF2MSA5MFK6E33ECTFJ9M", nil)
-    requestID, err := client.SendMessage(
-      context.Background(),
-      courier.SendMessageRequestBody{
-        Message: map[string]interface{}{
-          "to": map[string]string{
-            "email": email,
-          },
-          "template": "K4PMX20GEM4121GAFQJBH30JSSGD",
-          "data": map[string]string{
-            "recipientName": code,
-          },
-        },
-      },
-    )
-    if err != nil {
-      fmt.Println(err)
+	requestID, err := client.SendMessage(
+		context.Background(),
+		courier.SendMessageRequestBody{
+			Message: map[string]interface{}{
+				"to": map[string]string{
+					"email": email,
+				},
+				"template": "K4PMX20GEM4121GAFQJBH30JSSGD",
+				"data": map[string]string{
+					"recipientName": code,
+				},
+			},
+		},
+	)
+	if err != nil {
+		fmt.Println(err)
 	} else {
-	  fmt.Println(requestID)
+		fmt.Println(requestID)
 	}
 	// auth := smtp.PlainAuth(
 	// 	"",
@@ -182,7 +192,7 @@ func cheskverefy(c *gin.Context) {
 	if result.Email == user.Email {
 		c.JSON(http.StatusOK, gin.H{"verefy": result.Verefy})
 		return
-	}else{
+	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "email is not exist"})
 		return
 	}
@@ -243,6 +253,10 @@ func addTime(c *gin.Context) {
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	//get user times array and add new times array in times array
 	if result.Email == claims["email"] {
+		if(result.Blocked == true){
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user is blocked"})
+			return
+		}
 		//get user times array and add new times array in times array
 		update := bson.D{
 			{Key: "$set", Value: bson.D{
@@ -290,6 +304,10 @@ func updateTime(c *gin.Context) {
 
 	if result.Email == claims["email"] {
 		//get user times array and add new times array in times array
+		if(result.Blocked == true){
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user is blocked"})
+			return
+		}
 		update := bson.D{
 			{Key: "$set", Value: bson.D{
 				{Key: "times", Value: user.Times},
@@ -304,7 +322,7 @@ func updateTime(c *gin.Context) {
 
 		collection.UpdateOne(context.Background(), filter, update)
 		collection.FindOne(context.Background(), filter).Decode(&result)
-		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch,"companets":result.Companets})
+		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
 		return
 	}
 }
@@ -336,6 +354,10 @@ func updateCompanets(c *gin.Context) {
 
 	if result.Email == claims["email"] {
 		//get user times array and add new times array in times array
+		if(result.Blocked == true){
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user is blocked"})
+			return
+		}
 		update := bson.D{
 			{Key: "$set", Value: bson.D{
 				{Key: "companets", Value: user.Companets},
@@ -372,7 +394,11 @@ func getTimes(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == claims["email"] {
-		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch,"companets":result.Companets})
+		if(result.Blocked == true){
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user is blocked"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
@@ -426,6 +452,10 @@ func updatePassword(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == user.Email {
+		if result.Blocked == true {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user is blocked"})
+			return
+		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 		if err != nil {
 			fmt.Println(err)
@@ -466,12 +496,17 @@ func getUser(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == claims["email"] {
-		if result.Verefy == true {
-			c.JSON(http.StatusOK, gin.H{"email": result.Email,"verify": result.Verefy, "times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
+		if(result.Blocked == true){
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user is blocked"})
 			return
-		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verified"})
-			return
+		}else{
+			if result.Verefy == true {
+				c.JSON(http.StatusOK, gin.H{"email": result.Email, "verify": result.Verefy,"blocked":result.Blocked, "times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
+				return
+			} else {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verified"})
+				return
+			}
 		}
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
@@ -579,15 +614,26 @@ func login(c *gin.Context) {
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == user.Email {
 		if result.Verefy == true {
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-				"email": result.Email,
-			})
-			tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
-			if err != nil {
-				fmt.Println(err)
+			//check password
+			if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password)); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "password is incorrect"})
+				return
+			}else {
+				if(result.Blocked == true){
+					c.JSON(http.StatusBadRequest, gin.H{"error": "user is blocked"})
+					return
+				}else {
+					token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+						"email": result.Email,
+					})
+					tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
+					if err != nil {
+						fmt.Println(err)
+					}
+					c.JSON(http.StatusOK, gin.H{"token": tokenString})
+					return
+				}
 			}
-			c.JSON(http.StatusOK, gin.H{"token": tokenString})
-			return
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verified"})
 			return
