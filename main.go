@@ -14,7 +14,6 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/locales/id"
 	"github.com/trycourier/courier-go/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -291,10 +290,7 @@ func updateTime(c *gin.Context) {
 
 	if result.Email == claims["email"] {
 		//get user times array and add new times array in times array
-		if result.Verefy == false {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "user is not verefy"})
-			return
-		}
+		
 		if result.Blocked == true {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "user is blocked"})
 			return
