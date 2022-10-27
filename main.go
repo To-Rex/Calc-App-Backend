@@ -264,56 +264,7 @@ func addTime(c *gin.Context) {
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
 
-func updateTime(c *gin.Context) {
-	token := c.Request.Header.Get("Authorization")
-	token = token[7:len(token)]
-	claims := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("SECRET")), nil
-	})
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-		return
-	}
-	var user User
-	c.BindJSON(&user)
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	if err != nil {
-		fmt.Println(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client.Connect(ctx)
-	defer client.Disconnect(ctx)
-	collection := client.Database("CalcData").Collection("users")
-	filter := bson.D{{Key: "email", Value: claims["email"]}}
-	var result User
-	collection.FindOne(context.Background(), filter).Decode(&result)
 
-	if result.Email == claims["email"] {
-		//get user times array and add new times array in times array
-		
-		if result.Blocked == true {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "user is blocked"})
-			return
-		}
-		update := bson.D{
-			{Key: "$set", Value: bson.D{
-				{Key: "times", Value: user.Times},
-			}},
-			{Key: "$set", Value: bson.D{
-				{Key: "coments", Value: user.Coments},
-			}},
-			{Key: "$set", Value: bson.D{
-				{Key: "switch", Value: user.Switch},
-			}},
-		}
-
-		collection.UpdateOne(context.Background(), filter, update)
-		collection.FindOne(context.Background(), filter).Decode(&result)
-		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
-		return
-	}
-}
 
 func updateCompanets(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
@@ -601,6 +552,10 @@ func login(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	if result.Email == user.Email {
+		if result.Blocked == true {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user is blocked"})
+			return
+		}
 		if result.Verefy == true {
 			//check password
 			if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password)); err != nil {
@@ -647,6 +602,10 @@ func deleteTime(c *gin.Context) {
 	}
 	indexs := c.Query("index")
 	index, err := strconv.Atoi(indexs)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "index is not int"})
+		return
+	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
 	defer client.Disconnect(ctx)
@@ -655,6 +614,10 @@ func deleteTime(c *gin.Context) {
 	var result User
 	collection.FindOne(context.Background(), filter).Decode(&result)
 	lenth := len(result.Times)
+	if result.Blocked == true {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user is blocked"})
+		return
+	}
 	if index > lenth {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "index is not correct"})
 		return
@@ -686,3 +649,128 @@ func deleteTime(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "delete time"})
 	c.JSON(http.StatusOK, gin.H{"message": result})
 }
+
+func updateTime(c *gin.Context){
+	token := c.Request.Header.Get("Authorization")
+	token = token[7:len(token)]
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	indexs := c.Query("index")
+	index, err := strconv.Atoi(indexs)
+	//if index is not int return error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "index is not int"})
+		return
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: claims["email"]}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	if result.Blocked == true {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user is blocked"})
+		return
+	}
+
+	if result.Verefy == true {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verified"})
+		return
+	}
+
+	lenth := len(result.Times)
+	if index > lenth {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "index is not correct"})
+		return
+	}
+	//get data add index to time and coments and switch and update user
+	var times Timess
+	if err := c.ShouldBindJSON(&times); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := collection.FindOne(context.Background(), filter).Decode(&result); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		return
+	}
+	 for i := 0; i < len(result.Times); i++ {
+		if i == index {
+			result.Times[i] = times.Times
+			result.Coments[i] = times.Coments
+			result.Switch[i] = times.Switch
+		}
+	}
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "times", Value: result.Times},
+			{Key: "coments", Value: result.Coments},
+			{Key: "switchs", Value: result.Switch},
+		}},
+	}
+	collection.UpdateOne(context.Background(), filter, update)
+	c.JSON(http.StatusOK, gin.H{"message": "update time"})
+	c.JSON(http.StatusOK, gin.H{"message": result})
+}
+
+// func updateTime(c *gin.Context) {
+// 	token := c.Request.Header.Get("Authorization")
+// 	token = token[7:len(token)]
+// 	claims := jwt.MapClaims{}
+// 	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+// 		return []byte(os.Getenv("SECRET")), nil
+// 	})
+// 	if err != nil {
+// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+// 		return
+// 	}
+// 	var user User
+// 	c.BindJSON(&user)
+// 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+// 	if err != nil {
+// 		fmt.Println(err)
+// 	}
+// 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+// 	client.Connect(ctx)
+// 	defer client.Disconnect(ctx)
+// 	collection := client.Database("CalcData").Collection("users")
+// 	filter := bson.D{{Key: "email", Value: claims["email"]}}
+// 	var result User
+// 	collection.FindOne(context.Background(), filter).Decode(&result)
+
+// 	if result.Email == claims["email"] {
+// 		//get user times array and add new times array in times array
+		
+// 		if result.Blocked == true {
+// 			c.JSON(http.StatusBadRequest, gin.H{"error": "user is blocked"})
+// 			return
+// 		}
+// 		update := bson.D{
+// 			{Key: "$set", Value: bson.D{
+// 				{Key: "times", Value: user.Times},
+// 			}},
+// 			{Key: "$set", Value: bson.D{
+// 				{Key: "coments", Value: user.Coments},
+// 			}},
+// 			{Key: "$set", Value: bson.D{
+// 				{Key: "switch", Value: user.Switch},
+// 			}},
+// 		}
+
+// 		collection.UpdateOne(context.Background(), filter, update)
+// 		collection.FindOne(context.Background(), filter).Decode(&result)
+// 		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
+// 		return
+// 	}
+// }
