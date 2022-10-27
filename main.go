@@ -618,6 +618,11 @@ func deleteTime(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "user is blocked"})
 		return
 	}
+
+	if result.Verefy == false {
+		c.JSON(http.StatusOK, gin.H{"message": "delete time"})
+		return
+	}
 	if index > lenth {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "index is not correct"})
 		return
@@ -642,7 +647,7 @@ func deleteTime(c *gin.Context) {
 		{Key: "$set", Value: bson.D{
 			{Key: "times", Value: times},
 			{Key: "coments", Value: coments},
-			{Key: "switchs", Value: switchs},
+			{Key: "switch", Value: switchs},
 		}},
 	}
 	collection.UpdateOne(context.Background(), filter, update)
@@ -684,7 +689,7 @@ func updateTime(c *gin.Context){
 		return
 	}
 
-	if result.Verefy == true {
+	if result.Verefy == false {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verified"})
 		return
 	}
