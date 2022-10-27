@@ -122,7 +122,7 @@ func register(c *gin.Context) {
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -166,7 +166,7 @@ func cheskverefy(c *gin.Context) {
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -190,7 +190,7 @@ func verefyUser(c *gin.Context) {
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -228,7 +228,7 @@ func addTime(c *gin.Context) {
 	c.BindJSON(&timess)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -281,7 +281,7 @@ func updateCompanets(c *gin.Context) {
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -323,7 +323,7 @@ func getTimes(c *gin.Context) {
 	}
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -348,7 +348,7 @@ func resendVerefyCode(c *gin.Context) {
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -381,7 +381,7 @@ func updatePassword(c *gin.Context) {
 	c.BindJSON(&user)
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -397,7 +397,7 @@ func updatePassword(c *gin.Context) {
 		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 		if err != nil {
-			fmt.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 		}
 		update := bson.D{
 			{Key: "$set", Value: bson.D{
@@ -425,7 +425,7 @@ func getUser(c *gin.Context) {
 	}
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -463,18 +463,18 @@ func getAllUsers(c *gin.Context) {
 	var result []User
 	cur, err := collection.Find(context.Background(), bson.D{})
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	for cur.Next(context.Background()) {
 		var elem User
 		err := cur.Decode(&elem)
 		if err != nil {
-			fmt.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 		}
 		result = append(result, elem)
 	}
 	if err := cur.Err(); err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	cur.Close(context.Background())
 	c.JSON(http.StatusOK, result)
@@ -493,7 +493,7 @@ func logout(c *gin.Context) {
 	}
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -523,7 +523,7 @@ func deleteUser(c *gin.Context) {
 	}
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -542,7 +542,7 @@ func login(c *gin.Context) {
 	}
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client.Connect(ctx)
@@ -598,7 +598,7 @@ func deleteTime(c *gin.Context) {
 	}
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	indexs := c.Query("index")
 	index, err := strconv.Atoi(indexs)
@@ -652,7 +652,6 @@ func deleteTime(c *gin.Context) {
 	}
 	collection.UpdateOne(context.Background(), filter, update)
 	c.JSON(http.StatusOK, gin.H{"message": "delete time"})
-	c.JSON(http.StatusOK, gin.H{"message": result})
 }
 
 func updateTime(c *gin.Context){
@@ -668,7 +667,7 @@ func updateTime(c *gin.Context){
 	}
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "error"})
 	}
 	indexs := c.Query("index")
 	index, err := strconv.Atoi(indexs)
@@ -726,7 +725,6 @@ func updateTime(c *gin.Context){
 	}
 	collection.UpdateOne(context.Background(), filter, update)
 	c.JSON(http.StatusOK, gin.H{"message": "update time"})
-	c.JSON(http.StatusOK, gin.H{"message": result})
 }
 
 // func updateTime(c *gin.Context) {
