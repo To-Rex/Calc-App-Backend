@@ -55,6 +55,7 @@ func main() {
 	r.GET("getusers", getAllUsers)
 	r.POST("addtime", addTime)
 	r.POST("updatetime", updateTime)
+	r.POST("deletetime", deleteTime)
 	r.POST("updatecompanets", updateCompanets)
 	r.GET("gettimes", getTimes)
 	r.POST("resendverefy", resendVerefyCode)
@@ -627,4 +628,61 @@ func login(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
+}
+
+func deleteTime(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	token = token[7:len(token)]
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		fmt.Println(err)
+	}
+	indexs := c.Query("index")
+	index, err := strconv.Atoi(indexs)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client.Connect(ctx)
+	defer client.Disconnect(ctx)
+	collection := client.Database("CalcData").Collection("users")
+	filter := bson.D{{Key: "email", Value: claims["email"]}}
+	var result User
+	collection.FindOne(context.Background(), filter).Decode(&result)
+	lenth := len(result.Times)
+	if index > lenth {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "index is not correct"})
+		return
+	}
+
+	if err := collection.FindOne(context.Background(), filter).Decode(&result); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		return
+	}
+	 var times []string
+	 var coments []string
+	 var switchs []string
+	 for i := 0; i < len(result.Times); i++ {
+		if i != index {
+			times = append(times, result.Times[i])
+			coments = append(coments, result.Coments[i])
+			switchs = append(switchs, result.Switch[i])
+		}
+	}
+	
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "times", Value: times},
+			{Key: "coments", Value: coments},
+			{Key: "switchs", Value: switchs},
+		}},
+	}
+	collection.UpdateOne(context.Background(), filter, update)
+	c.JSON(http.StatusOK, gin.H{"message": "delete time"})
+	c.JSON(http.StatusOK, gin.H{"message": result})
 }
