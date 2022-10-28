@@ -30,15 +30,15 @@ type User struct {
 	Blocked   bool     `json:"blocked"`
 	Times     []string `json:"times"`
 	Coments   []string `json:"coments"`
-	Switch    []string `json:"switch"`
+	Switchs    []string `json:"switchs"`
 	Companets []string `json:"companets"`
 	Token     string   `json:"token"`
 }
 
 type Timess struct {
-	Times string `json:"times"`
+	Times   string `json:"times"`
 	Coments string `json:"coments"`
-	Switch string `json:"switch"`
+	Switchs  string `json:"switchs"`
 }
 
 type Token struct {
@@ -147,7 +147,7 @@ func register(c *gin.Context) {
 		Blocked:   false,
 		Times:     []string{},
 		Coments:   []string{},
-		Switch:    []string{},
+		Switchs:    []string{},
 		Companets: []string{},
 		Token:     createToken(user.Email),
 	}
@@ -254,7 +254,7 @@ func addTime(c *gin.Context) {
 				{Key: "coments", Value: append(result.Coments, timess.Coments)},
 			}},
 			{Key: "$set", Value: bson.D{
-				{Key: "switch", Value: append(result.Switch, timess.Switch)},
+				{Key: "switchs", Value: append(result.Switchs, timess.Switchs)},
 			}},
 		}
 		collection.UpdateOne(context.Background(), filter, update)
@@ -263,8 +263,6 @@ func addTime(c *gin.Context) {
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
 }
-
-
 
 func updateCompanets(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
@@ -337,7 +335,7 @@ func getTimes(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "user is blocked"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
+		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switchs": result.Switchs, "companets": result.Companets})
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "email is incorrect"})
@@ -440,7 +438,7 @@ func getUser(c *gin.Context) {
 			return
 		} else {
 			if result.Verefy == true {
-				c.JSON(http.StatusOK, gin.H{"email": result.Email, "verify": result.Verefy, "blocked": result.Blocked, "times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
+				c.JSON(http.StatusOK, gin.H{"email": result.Email, "verify": result.Verefy, "blocked": result.Blocked, "times": result.Times, "coments": result.Coments, "switchs": result.Switchs, "companets": result.Companets})
 				return
 			} else {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "email is not verified"})
@@ -632,29 +630,29 @@ func deleteTime(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
 		return
 	}
-	 var times []string
-	 var coments []string
-	 var switchs []string
-	 for i := 0; i < len(result.Times); i++ {
+	var times []string
+	var coments []string
+	var switchs []string
+	for i := 0; i < len(result.Times); i++ {
 		if i != index {
 			times = append(times, result.Times[i])
 			coments = append(coments, result.Coments[i])
-			switchs = append(switchs, result.Switch[i])
+			switchs = append(switchs, result.Switchs[i])
 		}
 	}
-	
+
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "times", Value: times},
 			{Key: "coments", Value: coments},
-			{Key: "switch", Value: switchs},
+			{Key: "switchs", Value: switchs},
 		}},
 	}
 	collection.UpdateOne(context.Background(), filter, update)
 	c.JSON(http.StatusOK, gin.H{"message": "delete time"})
 }
 
-func updateTime(c *gin.Context){
+func updateTime(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	token = token[7:len(token)]
 	claims := jwt.MapClaims{}
@@ -698,7 +696,7 @@ func updateTime(c *gin.Context){
 		c.JSON(http.StatusBadRequest, gin.H{"error": "index is not correct"})
 		return
 	}
-	//get data add index to time and coments and switch and update user
+	//get data add index to time and coments and switchs and update user
 	var times Timess
 	if err := c.ShouldBindJSON(&times); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -708,11 +706,11 @@ func updateTime(c *gin.Context){
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
 		return
 	}
-	 for i := 0; i < len(result.Times); i++ {
+	for i := 0; i < len(result.Times); i++ {
 		if i == index {
 			result.Times[i] = times.Times
 			result.Coments[i] = times.Coments
-			result.Switch[i] = times.Switch
+			result.Switchs[i] = times.Switchs
 		}
 	}
 
@@ -720,7 +718,7 @@ func updateTime(c *gin.Context){
 		{Key: "$set", Value: bson.D{
 			{Key: "times", Value: result.Times},
 			{Key: "coments", Value: result.Coments},
-			{Key: "switch", Value: result.Switch},
+			{Key: "switchs", Value: result.Switchs},
 		}},
 	}
 	collection.UpdateOne(context.Background(), filter, update)
@@ -754,7 +752,7 @@ func updateTime(c *gin.Context){
 
 // 	if result.Email == claims["email"] {
 // 		//get user times array and add new times array in times array
-		
+
 // 		if result.Blocked == true {
 // 			c.JSON(http.StatusBadRequest, gin.H{"error": "user is blocked"})
 // 			return
@@ -767,13 +765,13 @@ func updateTime(c *gin.Context){
 // 				{Key: "coments", Value: user.Coments},
 // 			}},
 // 			{Key: "$set", Value: bson.D{
-// 				{Key: "switch", Value: user.Switch},
+// 				{Key: "switchs", Value: user.Switchs},
 // 			}},
 // 		}
 
 // 		collection.UpdateOne(context.Background(), filter, update)
 // 		collection.FindOne(context.Background(), filter).Decode(&result)
-// 		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switch": result.Switch, "companets": result.Companets})
+// 		c.JSON(http.StatusOK, gin.H{"times": result.Times, "coments": result.Coments, "switchs": result.Switchs, "companets": result.Companets})
 // 		return
 // 	}
 // }
