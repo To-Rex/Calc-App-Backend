@@ -720,7 +720,7 @@ func updateTime(c *gin.Context){
 		{Key: "$set", Value: bson.D{
 			{Key: "times", Value: result.Times},
 			{Key: "coments", Value: result.Coments},
-			{Key: "switchs", Value: result.Switch},
+			{Key: "switch", Value: result.Switch},
 		}},
 	}
 	collection.UpdateOne(context.Background(), filter, update)
